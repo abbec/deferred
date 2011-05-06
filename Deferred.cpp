@@ -6,6 +6,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
+#include "App/DeferredApp.h"
 
 //--------------------------------------------------------------------------------------
 // Reject any D3D10 devices that aren't acceptable by returning false
@@ -59,10 +60,7 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D10FrameRender( ID3D10Device* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext )
 {
-    // Clear render target and the depth stencil 
-    float ClearColor[4] = { 0.176f, 0.196f, 0.667f, 0.0f };
-    pd3dDevice->ClearRenderTargetView( DXUTGetD3D10RenderTargetView(), ClearColor );
-    pd3dDevice->ClearDepthStencilView( DXUTGetD3D10DepthStencilView(), D3D10_CLEAR_DEPTH, 1.0, 0 );
+	DeferredApp::instance()->render(pd3dDevice, fTime, fElapsedTime, pUserContext);
 }
 
 
@@ -149,7 +147,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
     DXUTSetCallbackD3D10DeviceDestroyed( OnD3D10DestroyDevice );
 
     // Initialization
-
+	DeferredApp *app = DeferredApp::instance();
 
 
     DXUTInit( true, true, NULL ); // Parse the command line, show msgboxes on error, no extra command line params
