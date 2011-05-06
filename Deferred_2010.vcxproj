@@ -379,9 +379,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="DXUT\Optional\directx.ico" />
+    <ClInclude Include="App\DeferredApp.h" />
     <ClInclude Include="DXUT\Core\DXUT.h" />
     <ClInclude Include="DXUT\Core\DXUTenum.h" />
     <ClInclude Include="DXUT\Core\DXUTmisc.h" />
+    <ClCompile Include="App\DeferredApp.cpp" />
     <ClCompile Include="DXUT\Core\DXUT.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

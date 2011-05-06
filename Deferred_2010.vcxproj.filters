@@ -12,6 +12,9 @@
       <UniqueIdentifier>{2c3d4c8c-5d1a-459a-a05a-a4e4b608a44e}</UniqueIdentifier>
       <Extensions>fx;fxh;hlsl</Extensions>
     </Filter>
+    <Filter Include="App">
+      <UniqueIdentifier>{bb86ff4c-b245-4c12-bff9-4767b0bece6c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="DXUT\Optional\directx.ico">
@@ -74,8 +77,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Deferred.cpp" />
+    <ClCompile Include="App\DeferredApp.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="App\DeferredApp.h">
+      <Filter>App</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">

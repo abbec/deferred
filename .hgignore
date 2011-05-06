@@ -19,7 +19,7 @@ syntax: glob
 *.obj
 *.patch
 *.pch
-*.pdb    
+*.pdb
 *.plg
 *.[Pp]ublish.xml
 *.rdl.data
@@ -56,3 +56,4 @@ hgignore[.-]*
 ignore[.-]*
 svnignore[.-]*
 lint.db
+*.opensdf
