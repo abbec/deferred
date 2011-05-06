@@ -28,6 +28,7 @@ syntax: glob
 *.sig
 *.sqlsuo
 *.suo
+*.sdf
 *.svclog
 *.tlb
 *.tlh
