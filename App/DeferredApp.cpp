@@ -1,4 +1,5 @@
 #include "DXUT.h"
+//#include "../Scene/Scene.h"
 #include "DeferredApp.h"
 #include <iostream>
 
@@ -6,7 +7,8 @@ DeferredApp *DeferredApp::inst = NULL;
 
 DeferredApp::DeferredApp() :
 _d3d_device(NULL), _time(0.0), 
-_elapsed_time(0.0), _user_context(NULL)
+_elapsed_time(0.0), _user_context(NULL),
+_scene()
 {
 
 }
@@ -17,6 +19,19 @@ DeferredApp *DeferredApp::instance()
 		inst = new DeferredApp();
 
 	return inst;
+}
+
+HRESULT DeferredApp::initScene(ID3D10Device *device)
+{
+	return _scene.init(device);
+}
+
+bool DeferredApp::initBuffers(ID3D10Device *device)
+{
+	// Set up MRT
+
+
+	return true;
 }
 
 void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext)
@@ -39,6 +54,8 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 
 
 	//Final composition
+	_scene.render(pd3dDevice);
+
 }
 
 void DeferredApp::geometry_stage()
