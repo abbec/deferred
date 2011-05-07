@@ -42,7 +42,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_user_context = pUserContext;
 
 	// Clear render target and the depth stencil 
-    float ClearColor[4] = { 0.176f, 0.196f, 0.667f, 0.0f };
+    float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     pd3dDevice->ClearRenderTargetView( DXUTGetD3D10RenderTargetView(), ClearColor );
     pd3dDevice->ClearDepthStencilView( DXUTGetD3D10DepthStencilView(), D3D10_CLEAR_DEPTH, 1.0, 0 );
 
