@@ -33,7 +33,8 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
 HRESULT CALLBACK OnD3D10CreateDevice( ID3D10Device* pd3dDevice, const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc,
                                       void* pUserContext )
 {
-    return S_OK;
+	HRESULT res = DeferredApp::instance()->initScene(pd3dDevice);
+    return res;
 }
 
 
@@ -43,6 +44,7 @@ HRESULT CALLBACK OnD3D10CreateDevice( ID3D10Device* pd3dDevice, const DXGI_SURFA
 HRESULT CALLBACK OnD3D10ResizedSwapChain( ID3D10Device* pd3dDevice, IDXGISwapChain* pSwapChain,
                                           const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext )
 {
+	DeferredApp::instance()->initBuffers(pd3dDevice);
     return S_OK;
 }
 
@@ -52,6 +54,7 @@ HRESULT CALLBACK OnD3D10ResizedSwapChain( ID3D10Device* pd3dDevice, IDXGISwapCha
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
+	
 }
 
 
@@ -105,6 +108,7 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
                        bool bSideButton1Down, bool bSideButton2Down, int nMouseWheelDelta,
                        int xPos, int yPos, void* pUserContext )
 {
+
 }
 
 
@@ -157,6 +161,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
     DXUTMainLoop(); // Enter into the DXUT render loop
 
     // Perform any application-level cleanup here
+	delete app;
 
     return DXUTGetExitCode();
 }

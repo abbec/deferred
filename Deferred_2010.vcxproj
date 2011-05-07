@@ -378,6 +378,10 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DXUT\Optional\DXUTShapes.cpp" />
+    <ClCompile Include="Scene\Scene.cpp" />
+    <ClInclude Include="DXUT\Optional\DXUTShapes.h" />
+    <ClInclude Include="Scene\Scene.h" />
     <None Include="DXUT\Optional\directx.ico" />
     <ClInclude Include="App\DeferredApp.h" />
     <ClInclude Include="DXUT\Core\DXUT.h" />
@@ -401,6 +405,7 @@
     <ClCompile Include="DXUT\Optional\DXUTsettingsdlg.cpp" />
     <ClCompile Include="DXUT\Optional\SDKmesh.cpp" />
     <ClCompile Include="DXUT\Optional\SDKmisc.cpp" />
+    <None Include="Shaders\Deferred.fx" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Deferred.cpp" />

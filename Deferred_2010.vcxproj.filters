@@ -15,6 +15,9 @@
     <Filter Include="App">
       <UniqueIdentifier>{bb86ff4c-b245-4c12-bff9-4767b0bece6c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{724e788e-7f27-4816-80ad-236385c5d7ed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="DXUT\Optional\directx.ico">
@@ -74,16 +77,31 @@
     <ClCompile Include="DXUT\Optional\SDKmisc.cpp">
       <Filter>DXUT</Filter>
     </ClCompile>
+    <None Include="Shaders\Deferred.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Deferred.cpp" />
     <ClCompile Include="App\DeferredApp.cpp">
       <Filter>App</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="DXUT\Optional\DXUTShapes.cpp">
+      <Filter>DXUT</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App\DeferredApp.h">
       <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="DXUT\Optional\DXUTShapes.h">
+      <Filter>DXUT</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
