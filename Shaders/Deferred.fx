@@ -10,7 +10,7 @@ matrix Projection;
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
-    float4 Normal : NORMAL0;
+    float3 Normal : NORMAL0;
 };
 
 //--------------------------------------------------------------------------------------
@@ -19,12 +19,14 @@ struct VS_OUTPUT
 VS_OUTPUT VS( float4 Pos : POSITION, float4 Normal : NORMAL )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
-	matrix obj2World = mul(World, View);
-	obj2World = mul(obj2World, Projection);
 
+	matrix obj2World = mul(World, View);
+	output.Normal = Normal;
+
+	obj2World = mul(obj2World, Projection);
 	// Transform into world coordinates
     output.Pos = mul( Pos, obj2World );
-    output.Normal = mul( Normal, obj2World );
+    
     return output;
 }
 
@@ -34,7 +36,7 @@ VS_OUTPUT VS( float4 Pos : POSITION, float4 Normal : NORMAL )
 //--------------------------------------------------------------------------------------
 float4 PS( VS_OUTPUT input ) : SV_Target
 {
-    return normalize(input.Normal);
+    return float4(normalize(input.Normal), 1.0);
 }
 
 
