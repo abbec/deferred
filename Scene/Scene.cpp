@@ -105,13 +105,13 @@ HRESULT Scene::init(ID3D10Device *device)
     D3DXMatrixIdentity( &_world );
 
     // Initialize the view matrix
-    D3DXVECTOR3 Eye( 0.0f, 1.0f, -5.0f );
+    D3DXVECTOR3 Eye( 0.0f, 0.0f, 5.0f );
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
     D3DXVECTOR3 Up( 0.0f, 1.0f, 0.0f );
-    D3DXMatrixLookAtLH( &_view, &Eye, &At, &Up );
+    D3DXMatrixLookAtRH( &_view, &Eye, &At, &Up );
 
     // Initialize the projection matrix
-    D3DXMatrixPerspectiveFovLH( &_projection, ( float )D3DX_PI * 0.5f, width / ( FLOAT )height, 0.1f, 100.0f );
+    D3DXMatrixPerspectiveFovRH( &_projection, ( float )D3DX_PI * 0.5f, width / ( FLOAT )height, 0.1f, 100.0f );
 
 	return S_OK;
 }
@@ -146,16 +146,18 @@ void Scene::render(ID3D10Device *device)
 		D3DXMatrixTranslation(&_world, 0.0, 3.0, -1.0);
 		world_view = _world * _view;
 		D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
-		_wv_inverse->SetMatrix((float *)_world_view_inv);
+		D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
+		_wv_inverse->SetMatrix((float *)&_world_view_inv);
 		_worldVariable->SetMatrix( ( float* )&_world );
         _technique->GetPassByIndex( p )->Apply( 0 );
 		_sphere->DrawSubset(0);
 
 
-		D3DXMatrixTranslation(&_world, 0.0, -1.0, -1.0);
+		D3DXMatrixIdentity(&_world);
 		world_view = _world * _view;
 		D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
-		_wv_inverse->SetMatrix((float *)_world_view_inv);
+		D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
+		_wv_inverse->SetMatrix((float *)&_world_view_inv);
 		_worldVariable->SetMatrix( ( float* )&_world );
 		_technique->GetPassByIndex( p )->Apply( 0 );
 		_teapot->DrawSubset(0);
