@@ -23,11 +23,13 @@ private:
 	ID3D10EffectMatrixVariable *_worldVariable;
 	ID3D10EffectMatrixVariable *_viewVariable;
 	ID3D10EffectMatrixVariable *_projectionVariable;
+	ID3D10EffectMatrixVariable *_wv_inverse;
 	ID3D10EffectTechnique *_technique;
 
 	D3DXMATRIX _world;
 	D3DXMATRIX _view;
 	D3DXMATRIX _projection;
+	D3DXMATRIX _world_view_inv;
 	
 };
 #endif // _SCENE_H
