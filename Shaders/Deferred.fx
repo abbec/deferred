@@ -3,6 +3,7 @@
 //--------------------------------------------------------------------------------------
 matrix World;
 matrix View;
+matrix WorldViewInverse;
 matrix Projection;
 
 
@@ -10,22 +11,25 @@ matrix Projection;
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
-    float3 Normal : NORMAL0;
+    float4 Normal : NORMAL0;
 };
 
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-VS_OUTPUT VS( float4 Pos : POSITION, float4 Normal : NORMAL )
+VS_OUTPUT VS( float4 Pos : POSITION, float3 Normal : NORMAL )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
 
-	matrix obj2World = mul(World, View);
-	output.Normal = Normal;
+	matrix obj2world = mul(World, View);
 
-	obj2World = mul(obj2World, Projection);
+	obj2world = mul(obj2world, Projection);
 	// Transform into world coordinates
-    output.Pos = mul( Pos, obj2World );
+    output.Pos = mul( Pos, obj2world );
+
+	// View space normal
+	output.Normal = float4(Normal, 0.0);
+	output.Normal = normalize(mul(output.Normal, WorldViewInverse));
     
     return output;
 }
@@ -36,7 +40,9 @@ VS_OUTPUT VS( float4 Pos : POSITION, float4 Normal : NORMAL )
 //--------------------------------------------------------------------------------------
 float4 PS( VS_OUTPUT input ) : SV_Target
 {
-    return float4(normalize(input.Normal), 1.0);
+	float4 normal = normalize(input.Normal);
+
+    return float4((normal * 0.5f + 0.5));
 }
 
 

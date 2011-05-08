@@ -69,10 +69,11 @@ HRESULT Scene::init(ID3D10Device *device)
     _worldVariable = _effect->GetVariableByName( "World" )->AsMatrix();
     _viewVariable = _effect->GetVariableByName( "View" )->AsMatrix();
     _projectionVariable = _effect->GetVariableByName( "Projection" )->AsMatrix();
+	_wv_inverse = _effect->GetVariableByName( "WorldViewInverse" )->AsMatrix();
 
 	// Create meshes
 	DXUTCreateSphere(device, 1.0, 25, 25, &_sphere);
-	DXUTCreateTeapot(device, &_teapot);
+	DXUTCreateBox(device, 2.0, 2.0, 3.0, &_teapot);
 
 	const D3D10_INPUT_ELEMENT_DESC *test;
 	UINT numTest;
@@ -104,20 +105,20 @@ HRESULT Scene::init(ID3D10Device *device)
     D3DXMatrixIdentity( &_world );
 
     // Initialize the view matrix
-    D3DXVECTOR3 Eye( -2.0f, 0.0f, -5.0f );
+    D3DXVECTOR3 Eye( 0.0f, 1.0f, -5.0f );
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
     D3DXVECTOR3 Up( 0.0f, 1.0f, 0.0f );
-    D3DXMatrixLookAtRH( &_view, &Eye, &At, &Up );
+    D3DXMatrixLookAtLH( &_view, &Eye, &At, &Up );
 
     // Initialize the projection matrix
-    D3DXMatrixPerspectiveFovRH( &_projection, ( float )D3DX_PI * 0.5f, width / ( FLOAT )height, 0.1f, 100.0f );
+    D3DXMatrixPerspectiveFovLH( &_projection, ( float )D3DX_PI * 0.5f, width / ( FLOAT )height, 0.1f, 100.0f );
 
 	return S_OK;
 }
 
 void Scene::rotate(D3DXVECTOR3 &at)
 {
-	D3DXVECTOR3 Eye( 0.0f, 0.0f, -5.0f );
+	D3DXVECTOR3 Eye( 0.0f, 0.0f, 5.0f );
     D3DXVECTOR3 Up( 0.0f, 1.0f, 0.0f );
 	D3DXMatrixLookAtLH( &_view, &Eye, &at, &Up );
 }
@@ -137,15 +138,24 @@ void Scene::render(ID3D10Device *device)
     // Renders a triangle
     //
     D3D10_TECHNIQUE_DESC techDesc;
+	D3DXMATRIX world_view;
     _technique->GetDesc( &techDesc );
     for( UINT p = 0; p < techDesc.Passes; ++p )
     {
 		D3DXMatrixIdentity( &_world );
+		D3DXMatrixTranslation(&_world, 0.0, 3.0, -1.0);
+		world_view = _world * _view;
+		D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
+		_wv_inverse->SetMatrix((float *)_world_view_inv);
 		_worldVariable->SetMatrix( ( float* )&_world );
         _technique->GetPassByIndex( p )->Apply( 0 );
 		_sphere->DrawSubset(0);
 
-		D3DXMatrixTranslation(&_world, 0.0, 3.0, -1.0);
+
+		D3DXMatrixTranslation(&_world, 0.0, -1.0, -1.0);
+		world_view = _world * _view;
+		D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
+		_wv_inverse->SetMatrix((float *)_world_view_inv);
 		_worldVariable->SetMatrix( ( float* )&_world );
 		_technique->GetPassByIndex( p )->Apply( 0 );
 		_teapot->DrawSubset(0);
