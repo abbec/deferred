@@ -158,14 +158,14 @@ static void MakeBox( VERTEX* pVertices, DWORD* pPointRep, WORD* pwIndices, float
             pVertex++;
         }
 
-        pwFace[0] = ( WORD )( iVertex );
+        pwFace[0] = ( WORD )( iVertex + 2 );
         pwFace[1] = ( WORD )( iVertex + 1 );
-        pwFace[2] = ( WORD )( iVertex + 2 );
+        pwFace[2] = ( WORD )( iVertex );
         pwFace += 3;
 
-        pwFace[0] = ( WORD )( iVertex + 2 );
+        pwFace[0] = ( WORD )( iVertex );
         pwFace[1] = ( WORD )( iVertex + 3 );
-        pwFace[2] = ( WORD )( iVertex );
+        pwFace[2] = ( WORD )( iVertex + 2 );
         pwFace += 3;
 
         iVertex += 4;
