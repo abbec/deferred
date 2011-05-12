@@ -24,6 +24,8 @@ private:
 	ID3D10EffectMatrixVariable *_viewVariable;
 	ID3D10EffectMatrixVariable *_projectionVariable;
 	ID3D10EffectMatrixVariable *_wv_inverse;
+	ID3D10EffectScalarVariable *_spec_intensity_var;
+
 	ID3D10EffectTechnique *_technique;
 
 	D3DXMATRIX _world;
