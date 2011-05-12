@@ -73,7 +73,7 @@ HRESULT Scene::init(ID3D10Device *device)
 
 	// Create meshes
 	DXUTCreateSphere(device, 1.0, 25, 25, &_sphere);
-	DXUTCreateBox(device, 1.0, 1.0, 1.0, &_teapot);
+	DXUTCreateTeapot(device, &_teapot);
 
 	const D3D10_INPUT_ELEMENT_DESC *test;
 	UINT numTest;
@@ -105,7 +105,7 @@ HRESULT Scene::init(ID3D10Device *device)
     D3DXMatrixIdentity( &_world );
 
     // Initialize the view matrix
-    D3DXVECTOR3 Eye( 2.0f, 2.0f, 2.0f );
+    D3DXVECTOR3 Eye( 2.0f, 1.0f, 2.0f );
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
     D3DXVECTOR3 Up( 0.0f, 1.0f, 0.0f );
     D3DXMatrixLookAtRH( &_view, &Eye, &At, &Up );
