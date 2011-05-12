@@ -6,6 +6,8 @@ matrix View;
 matrix WorldViewInverse;
 matrix Projection;
 
+float SpecularIntensity;
+
 
 //--------------------------------------------------------------------------------------
 struct VS_OUTPUT
@@ -41,7 +43,7 @@ float4 PS( VS_OUTPUT input ) : SV_Target
 {
 	float4 normal = normalize(input.Normal);
 
-    return normal;
+    return float4(SpecularIntensity, SpecularIntensity,  SpecularIntensity, 1.0);
 }
 
 

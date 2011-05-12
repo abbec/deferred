@@ -70,6 +70,7 @@ HRESULT Scene::init(ID3D10Device *device)
     _viewVariable = _effect->GetVariableByName( "View" )->AsMatrix();
     _projectionVariable = _effect->GetVariableByName( "Projection" )->AsMatrix();
 	_wv_inverse = _effect->GetVariableByName( "WorldViewInverse" )->AsMatrix();
+	_spec_intensity_var = _effect->GetVariableByName( "SpecularIntensity" )->AsScalar();
 
 	// Create meshes
 	DXUTCreateSphere(device, 1.0, 25, 25, &_sphere);
@@ -149,6 +150,7 @@ void Scene::render(ID3D10Device *device)
 		D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 		_wv_inverse->SetMatrix((float *)&_world_view_inv);
 		_worldVariable->SetMatrix( ( float* )&_world );
+		_spec_intensity_var->SetFloat(0.8);
 		_technique->GetPassByIndex( p )->Apply( 0 );
 		_teapot->DrawSubset(0);
     }
