@@ -5581,9 +5581,9 @@ static void MakeTeapot( VERTEX* pVertices, WORD* pwIndices )
 
     while( pwFace < pwFaceLim )
     {
-        pwFace[0] = pwTeapotFace[0];
+        pwFace[0] = pwTeapotFace[2];
         pwFace[1] = pwTeapotFace[1];
-        pwFace[2] = pwTeapotFace[2];
+        pwFace[2] = pwTeapotFace[0];
 
         pwFace += 3;
         pwTeapotFace += 3;
