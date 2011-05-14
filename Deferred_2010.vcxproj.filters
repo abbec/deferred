@@ -92,6 +92,9 @@
     <ClCompile Include="DXUT\Optional\DXUTShapes.cpp">
       <Filter>DXUT</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\Object.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App\DeferredApp.h">
@@ -102,6 +105,9 @@
     </ClInclude>
     <ClInclude Include="DXUT\Optional\DXUTShapes.h">
       <Filter>DXUT</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\Object.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

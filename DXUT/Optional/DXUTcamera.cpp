@@ -73,7 +73,7 @@ D3DXQUATERNION CD3DArcBall::QuatFromBallPoints( const D3DXVECTOR3& vFrom, const 
 {
     D3DXVECTOR3 vPart;
     float fDot = D3DXVec3Dot( &vFrom, &vTo );
-    D3DXVec3Cross( &vPart, &vFrom, &vTo );
+    D3DXVec3Cross( &vPart, &vTo, &vFrom );
 
     return D3DXQUATERNION( vPart.x, vPart.y, vPart.z, fDot );
 }
@@ -269,7 +269,7 @@ VOID CBaseCamera::SetViewParams( D3DXVECTOR3* pvEyePt, D3DXVECTOR3* pvLookatPt )
 
     // Calc the view matrix
     D3DXVECTOR3 vUp( 0,1,0 );
-    D3DXMatrixLookAtLH( &m_mView, pvEyePt, pvLookatPt, &vUp );
+    D3DXMatrixLookAtRH( &m_mView, pvEyePt, pvLookatPt, &vUp );
 
     D3DXMATRIX mInvView;
     D3DXMatrixInverse( &mInvView, NULL, &m_mView );
@@ -299,7 +299,7 @@ VOID CBaseCamera::SetProjParams( FLOAT fFOV, FLOAT fAspect, FLOAT fNearPlane,
     m_fNearPlane = fNearPlane;
     m_fFarPlane = fFarPlane;
 
-    D3DXMatrixPerspectiveFovLH( &m_mProj, fFOV, fAspect, fNearPlane, fFarPlane );
+    D3DXMatrixPerspectiveFovRH( &m_mProj, fFOV, fAspect, fNearPlane, fFarPlane );
 }
 
 
@@ -775,7 +775,7 @@ VOID CFirstPersonCamera::FrameMove( FLOAT fElapsedTime )
     // Transform vectors based on camera's rotation matrix
     D3DXVECTOR3 vWorldUp, vWorldAhead;
     D3DXVECTOR3 vLocalUp = D3DXVECTOR3( 0, 1, 0 );
-    D3DXVECTOR3 vLocalAhead = D3DXVECTOR3( 0, 0, 1 );
+    D3DXVECTOR3 vLocalAhead = D3DXVECTOR3( 0, 0, -1 );
     D3DXVec3TransformCoord( &vWorldUp, &vLocalUp, &mCameraRot );
     D3DXVec3TransformCoord( &vWorldAhead, &vLocalAhead, &mCameraRot );
 
@@ -798,7 +798,7 @@ VOID CFirstPersonCamera::FrameMove( FLOAT fElapsedTime )
     m_vLookAt = m_vEye + vWorldAhead;
 
     // Update the view matrix
-    D3DXMatrixLookAtLH( &m_mView, &m_vEye, &m_vLookAt, &vWorldUp );
+    D3DXMatrixLookAtRH( &m_mView, &m_vEye, &m_vLookAt, &vWorldUp );
 
     D3DXMatrixInverse( &m_mCameraWorld, NULL, &m_mView );
 }
@@ -885,7 +885,7 @@ VOID CModelViewerCamera::FrameMove( FLOAT fElapsedTime )
     // Transform vectors based on camera's rotation matrix
     D3DXVECTOR3 vWorldUp, vWorldAhead;
     D3DXVECTOR3 vLocalUp = D3DXVECTOR3( 0, 1, 0 );
-    D3DXVECTOR3 vLocalAhead = D3DXVECTOR3( 0, 0, 1 );
+    D3DXVECTOR3 vLocalAhead = D3DXVECTOR3( 0, 0, -1 );
     D3DXVec3TransformCoord( &vWorldUp, &vLocalUp, &mCameraRot );
     D3DXVec3TransformCoord( &vWorldAhead, &vLocalAhead, &mCameraRot );
 
@@ -902,7 +902,7 @@ VOID CModelViewerCamera::FrameMove( FLOAT fElapsedTime )
     m_vEye = m_vLookAt - vWorldAhead * m_fRadius;
 
     // Update the view matrix
-    D3DXMatrixLookAtLH( &m_mView, &m_vEye, &m_vLookAt, &vWorldUp );
+    D3DXMatrixLookAtRH( &m_mView, &m_vEye, &m_vLookAt, &vWorldUp );
 
     D3DXMATRIX mInvView;
     D3DXMatrixInverse( &mInvView, NULL, &m_mView );
@@ -990,7 +990,7 @@ void CModelViewerCamera::SetViewParams( D3DXVECTOR3* pvEyePt, D3DXVECTOR3* pvLoo
     D3DXQUATERNION quat;
     D3DXMATRIXA16 mRotation;
     D3DXVECTOR3 vUp( 0,1,0 );
-    D3DXMatrixLookAtLH( &mRotation, pvEyePt, pvLookatPt, &vUp );
+    D3DXMatrixLookAtRH( &mRotation, pvEyePt, pvLookatPt, &vUp );
     D3DXQuaternionRotationMatrix( &quat, &mRotation );
     m_ViewArcBall.SetQuatNow( quat );
 
@@ -1344,7 +1344,7 @@ HRESULT CDXUTDirectionWidget::OnRender10( D3DXCOLOR color, const D3DXMATRIX* pmV
     D3DXVECTOR3 vAt = D3DXVECTOR3( 0, 0, 0 );
     D3DXVECTOR3 vUp = D3DXVECTOR3( 0, 1, 0 );
     D3DXMatrixRotationX( &mRotateB, D3DX_PI );
-    D3DXMatrixLookAtLH( &mRotateA, &m_vCurrentDir, &vAt, &vUp );
+    D3DXMatrixLookAtRH( &mRotateA, &m_vCurrentDir, &vAt, &vUp );
     D3DXMatrixInverse( &mRotateA, NULL, &mRotateA );
     mRotate = mRotateB * mRotateA;
 
@@ -1469,7 +1469,7 @@ HRESULT CDXUTDirectionWidget::OnRender9( D3DXCOLOR color, const D3DXMATRIX* pmVi
     D3DXVECTOR3 vAt = D3DXVECTOR3( 0, 0, 0 );
     D3DXVECTOR3 vUp = D3DXVECTOR3( 0, 1, 0 );
     D3DXMatrixRotationX( &mRotateB, D3DX_PI );
-    D3DXMatrixLookAtLH( &mRotateA, &m_vCurrentDir, &vAt, &vUp );
+    D3DXMatrixLookAtRH( &mRotateA, &m_vCurrentDir, &vAt, &vUp );
     D3DXMatrixInverse( &mRotateA, NULL, &mRotateA );
     mRotate = mRotateB * mRotateA;
 
