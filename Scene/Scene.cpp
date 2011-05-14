@@ -49,16 +49,13 @@ HRESULT Scene::init(ID3D10Device *device)
 
 	ID3D10Blob *ppErrors = NULL;
 	// Create a shader
-	hr = D3DX10CreateEffectFromFile( L"Shaders/Deferred.fx", NULL, NULL, "fx_4_0", dwShaderFlags, 0, device, NULL,
+	hr = D3DX10CreateEffectFromFile( L"Shaders\\Deferred.fx", NULL, NULL, "fx_4_0", dwShaderFlags, 0, device, NULL,
                                          NULL, &_effect, &ppErrors, NULL );
+
     if( FAILED( hr ) )
     {
       	if (ppErrors)
-		{     
-			std::string s("Shader compile error: ");
-			s += ((char*)ppErrors->GetBufferPointer());
-			MessageBoxA(NULL, s.c_str(), "Error", MB_OK);
-		}
+			_cprintf("Shader compile error: %s\n", (char*)ppErrors->GetBufferPointer());
 
 		return hr;
     }
@@ -72,13 +69,16 @@ HRESULT Scene::init(ID3D10Device *device)
     _projectionVariable = _effect->GetVariableByName( "Projection" )->AsMatrix();
 	_wv_inverse = _effect->GetVariableByName( "WorldViewInverse" )->AsMatrix();
 	_spec_intensity_var = _effect->GetVariableByName( "SpecularIntensity" )->AsScalar();
+	_texture_SR = _effect->GetVariableByName("AlbedoTexture")->AsShaderResource();
 
 	// Create meshes
 	DXUTCreateSphere(device, 1.0, 25, 25, &_sphere);
 	DXUTCreateBox(device, 1.0, 1.0, 1.0, &_teapot);
 
-	if (!_object.read_from_obj(device, "Media\\viking.obj"))
+	if (!_object.read_from_obj(device, "Media\\monkey.obj"))
 		_cprintf("Error in initializing OBJ object! \n");
+
+	// TODO: Set up lighting
 
 	// Create the input layout
 	D3D10_PASS_DESC PassDesc;
@@ -165,6 +165,7 @@ void Scene::render(ID3D10Device *device)
 		_spec_intensity_var->SetFloat(0.8);
 		_technique->GetPassByIndex( p )->Apply( 0 );
 		//_teapot->DrawSubset(0);
+		_texture_SR->SetResource(_object.get_texture());
 		_object.render();
     }
 }

@@ -27,6 +27,7 @@ private:
 
 	ID3D10InputLayout *_layout;
 	ID3D10Effect *_effect;
+	ID3D10EffectShaderResourceVariable *_texture_SR;
 	ID3D10EffectMatrixVariable *_worldVariable;
 	ID3D10EffectMatrixVariable *_viewVariable;
 	ID3D10EffectMatrixVariable *_projectionVariable;

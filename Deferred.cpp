@@ -158,7 +158,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
     // Initialization
 	AllocConsole();
 	SetConsoleTitle(L"SuperConsole");
-	_cprintf("Starting application...\n");
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+	_cprintf("Starting application...GO!\n");
 
 	DeferredApp *app = DeferredApp::instance();
 
@@ -170,6 +172,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
     DXUTMainLoop(); // Enter into the DXUT render loop
 
     // Perform any application-level cleanup here
+	FreeConsole();
 	delete app;
 
     return DXUTGetExitCode();
