@@ -29,12 +29,11 @@ public:
 	static const UINT NUM_LAYOUT_ELMS;
 
 	Object();
-
 	~Object();
 
 	bool read_from_obj(ID3D10Device *device, std::string filename);
-
 	void render();
+	ID3D10ShaderResourceView *get_texture() { return _texture_RV; }
 
 private:
 
@@ -46,6 +45,8 @@ private:
 	std::vector<Vertex> _vertex_list;
 	std::vector<DWORD> _index_list;
 	std::map<UINT, VertexEntry> _unique_verts;
+
+	ID3D10ShaderResourceView *_texture_RV;
 
 };
 

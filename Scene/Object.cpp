@@ -16,21 +16,26 @@ const D3D10_INPUT_ELEMENT_DESC Object::LAYOUT[] =
 const UINT Object::NUM_LAYOUT_ELMS = sizeof(LAYOUT) / sizeof(LAYOUT[0]);
 
 Object::Object() :
-_mesh(NULL)
+_mesh(NULL), _texture_RV(NULL)
 {
 }
 
 Object::~Object()
 {
+	// Clean up D3D resources
 	if (_mesh)
 		_mesh->Release();
+
+	if (_texture_RV)
+		_texture_RV->Release();
 }
 
 bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 {
-	
 	WCHAR str_command[256] = {0};
     std::wifstream infile(filename);
+
+	// Temp arrays for storing pos, tex coords and normals
 	std::vector<D3DXVECTOR3> positions;
 	std::vector<D3DXVECTOR2> tex_coords;
 	std::vector<D3DXVECTOR3> normals;
@@ -45,7 +50,7 @@ bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 		return false;
 	}
 
-	_cprintf("Reading file %s ...", filename);
+	_cprintf("Reading file: %s ...\n", filename.c_str());
 
 	while(infile)
 	{
@@ -149,6 +154,8 @@ bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 		infile.ignore(1000, '\n');
 	}
 
+	_cprintf("Done! Setting up mesh...\n");
+
 	return set_up_mesh();
 }
 
@@ -202,10 +209,14 @@ bool Object::set_up_mesh()
 	// Commit the mesh to device
 	hr = _mesh->CommitToDevice();
 
-	_cprintf("Number of vertices: %i, faces: %i", _mesh->GetVertexCount(), _mesh->GetFaceCount());
-
 	if (FAILED(hr))
 		return false;
+
+	_cprintf("Done! Number of vertices: %i, faces: %i", _mesh->GetVertexCount(), _mesh->GetFaceCount());
+
+	// Load texture
+	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(_device, L"Media\\Textures\\fur2.jpg", NULL, NULL, &_texture_RV, NULL )))
+		  _cprintf("Could not load texture!\n");
 
 	return true;
 }
