@@ -7,7 +7,7 @@
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
 #include "App/DeferredApp.h"
-
+#include <conio.h>
 //--------------------------------------------------------------------------------------
 // Reject any D3D10 devices that aren't acceptable by returning false
 //--------------------------------------------------------------------------------------
@@ -54,7 +54,8 @@ HRESULT CALLBACK OnD3D10ResizedSwapChain( ID3D10Device* pd3dDevice, IDXGISwapCha
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
-	
+	// Update the camera
+	DeferredApp::instance()->update(fTime, fElapsedTime, pUserContext);
 }
 
 
@@ -89,6 +90,10 @@ void CALLBACK OnD3D10DestroyDevice( void* pUserContext )
 LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                           bool* pbNoFurtherProcessing, void* pUserContext )
 {
+
+	// Pass all remaining windows messages to camera so it can respond to user input
+	DeferredApp::instance()->handle_messages( hWnd, uMsg, wParam, lParam );
+
     return 0;
 }
 
@@ -151,6 +156,10 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
     DXUTSetCallbackD3D10DeviceDestroyed( OnD3D10DestroyDevice );
 
     // Initialization
+	AllocConsole();
+	SetConsoleTitle(L"SuperConsole");
+	_cprintf("Starting application...\n");
+
 	DeferredApp *app = DeferredApp::instance();
 
 

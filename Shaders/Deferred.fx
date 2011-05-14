@@ -14,6 +14,7 @@ struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
     float4 Normal : NORMAL;
+	float2 TexCoord : TEXCOORD;
 };
 
 //--------------------------------------------------------------------------------------
@@ -43,7 +44,7 @@ float4 PS( VS_OUTPUT input ) : SV_Target
 {
 	float4 normal = normalize(input.Normal);
 
-    return float4(SpecularIntensity, SpecularIntensity,  SpecularIntensity, 1.0);
+    return normal;
 }
 
 

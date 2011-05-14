@@ -34,6 +34,20 @@ bool DeferredApp::initBuffers(ID3D10Device *device)
 	return true;
 }
 
+void DeferredApp::update(double fTime, float fElapsedTime, void* pUserContext)
+{
+	_scene.update(fTime, fElapsedTime, pUserContext);
+}
+
+LRESULT DeferredApp::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+
+	// Pass user messages on to the scene
+	_scene.handle_messages(hWnd, uMsg, wParam, lParam);
+
+	return 0;
+}
+
 void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext)
 {
 	_d3d_device = pd3dDevice;

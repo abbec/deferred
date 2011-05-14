@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include <cassert>
 #include <iostream>
+#include <conio.h>
 
 Scene::Scene() :
 _sphere(NULL), _layout(NULL), _effect(NULL), _worldVariable(NULL),
@@ -74,16 +75,16 @@ HRESULT Scene::init(ID3D10Device *device)
 
 	// Create meshes
 	DXUTCreateSphere(device, 1.0, 25, 25, &_sphere);
-	DXUTCreateTeapot(device, &_teapot);
+	DXUTCreateBox(device, 1.0, 1.0, 1.0, &_teapot);
 
-	const D3D10_INPUT_ELEMENT_DESC *test;
-	UINT numTest;
-	_teapot->GetVertexDescription(&test, &numTest);
+	if (!_object.read_from_obj(device, "Media\\viking.obj"))
+		_cprintf("Error in initializing OBJ object! \n");
 
 	// Create the input layout
 	D3D10_PASS_DESC PassDesc;
     _technique->GetPassByIndex( 0 )->GetDesc( &PassDesc );
-    hr = device->CreateInputLayout(test, numTest, PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &_layout);
+	hr = device->CreateInputLayout(Deferred::Object::LAYOUT, Deferred::Object::NUM_LAYOUT_ELMS, 
+		PassDesc.pIAInputSignature, PassDesc.IAInputSignatureSize, &_layout);
 
 	if (FAILED(hr))
 	{
@@ -105,23 +106,32 @@ HRESULT Scene::init(ID3D10Device *device)
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
 
-    // Initialize the view matrix
-    D3DXVECTOR3 Eye( 2.0f, 1.0f, 2.0f );
-    D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
-    D3DXVECTOR3 Up( 0.0f, 1.0f, 0.0f );
-    D3DXMatrixLookAtRH( &_view, &Eye, &At, &Up );
+    //// Initialize the view matrix
+    //D3DXVECTOR3 Eye( 2.0f, 1.0f, 2.0f );
+    //D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
+    //D3DXVECTOR3 Up( 0.0f, 1.0f, 0.0f );
+    //D3DXMatrixLookAtRH( &_view, &Eye, &At, &Up );
 
-    // Initialize the projection matrix
-    D3DXMatrixPerspectiveFovRH( &_projection, ( float )D3DX_PI * 0.5f, width / ( FLOAT )height, 0.1f, 100.0f );
+    //// Initialize the projection matrix
+    //D3DXMatrixPerspectiveFovRH( &_projection, ( float )D3DX_PI * 0.5f, width / ( FLOAT )height, 0.1f, 100.0f );
+
+	D3DXVECTOR3 Eye( 2.0f, 1.0f, 2.0f );
+    D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
+	_camera.SetViewParams(&Eye, &At);
+	_camera.SetProjParams(( float )D3DX_PI * 0.5f, width / ( float )height, 0.1f, 100.0f);
+	_camera.SetWindow(width, height);
 
 	return S_OK;
 }
 
-void Scene::rotate(D3DXVECTOR3 &at)
+void Scene::update(double fTime, float fElapsedTime, void* pUserContext)
 {
-	D3DXVECTOR3 Eye( 0.0f, 0.0f, 5.0f );
-    D3DXVECTOR3 Up( 0.0f, 1.0f, 0.0f );
-	D3DXMatrixLookAtRH( &_view, &Eye, &at, &Up );
+	_camera.FrameMove(fElapsedTime);
+}
+
+LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	return _camera.HandleMessages(hWnd, uMsg, wParam, lParam);
 }
 
 void Scene::render(ID3D10Device *device)
@@ -131,6 +141,10 @@ void Scene::render(ID3D10Device *device)
 	//
     // Update variables
     //
+	_world = *_camera.GetWorldMatrix();
+	_view = *_camera.GetViewMatrix();
+	_projection = *_camera.GetProjMatrix();
+
     _worldVariable->SetMatrix( ( float* )&_world );
     _viewVariable->SetMatrix( ( float* )&_view );
     _projectionVariable->SetMatrix( ( float* )&_projection );
@@ -143,8 +157,6 @@ void Scene::render(ID3D10Device *device)
     _technique->GetDesc( &techDesc );
     for( UINT p = 0; p < techDesc.Passes; ++p )
     {
-
-		D3DXMatrixIdentity(&_world);
 		world_view = _world * _view;
 		D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
 		D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
@@ -152,6 +164,7 @@ void Scene::render(ID3D10Device *device)
 		_worldVariable->SetMatrix( ( float* )&_world );
 		_spec_intensity_var->SetFloat(0.8);
 		_technique->GetPassByIndex( p )->Apply( 0 );
-		_teapot->DrawSubset(0);
+		//_teapot->DrawSubset(0);
+		_object.render();
     }
 }

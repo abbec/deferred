@@ -1,0 +1,173 @@
+# Blender MTL File: 'VIKING1.blend'
+# Material Count: 16
+newmtl BLUE
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.000000 0.000000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+
+
+newmtl EYE
+Ns 392.156863
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.321513 0.321513 0.321513
+Ni 1.000000
+d 1.000000
+illum 2
+
+
+newmtl EYE_iris
+Ns 437.254902
+Ka 0.000000 0.000000 0.000000
+Kd 0.727438 0.714896 0.824412
+Ks 0.797478 0.797478 0.797478
+Ni 1.000000
+d 0.000000
+illum 2
+
+
+newmtl EYE_iris1
+Ns 437.254902
+Ka 0.000000 0.000000 0.000000
+Kd 0.000000 0.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\iris_test.jpg
+
+
+newmtl HAT
+Ns 421.568627
+Ka 0.000000 0.000000 0.000000
+Kd 0.700000 0.700000 0.700000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0062_S.jpg
+map_Bump C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0062_S.jpg
+
+
+newmtl HORN
+Ns 468.627451
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+
+
+newmtl Material
+Ns 66.666667
+Ka 0.000000 0.000000 0.000000
+Kd 0.989139 0.887122 0.786785
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+
+
+newmtl Material.001_Untitled.003
+Ns 66.666667
+Ka 0.000000 0.000000 0.000000
+Kd 0.349496 0.235609 0.124075
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd Untitled
+
+
+newmtl Material.002_Untitled.002
+Ns 66.666667
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 0.000000 0.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd Untitled
+
+
+newmtl PANTS_Leather0088_S.jpg
+Ns 556.862745
+Ka 0.000000 0.000000 0.000000
+Kd 0.539307 0.301009 0.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd C:\Users\Stina\Desktop\Leather0088_S.jpg
+
+
+newmtl belt
+Ns 556.862745
+Ka 0.000000 0.000000 0.000000
+Kd 0.024684 0.017279 0.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0063_S.jpg
+map_Bump C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0063_S.jpg
+
+
+newmtl belt_Leather0088_S.jpg
+Ns 556.862745
+Ka 0.000000 0.000000 0.000000
+Kd 0.024684 0.017279 0.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd C:\Users\Stina\Desktop\Leather0088_S.jpg
+
+
+newmtl gold
+Ns 717.647059
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 0.800000 0.260693
+Ks 1.094956 1.094956 1.094956
+Ni 1.000000
+d 1.000000
+illum 2
+
+
+newmtl hair
+Ns 66.666667
+Ka 0.000000 0.000000 0.000000
+Kd 0.349496 0.235609 0.124075
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\Fur0018_1_S.jpg
+map_Bump C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\Fur0018_1_S.jpg
+
+
+newmtl iris
+Ns 437.254902
+Ka 0.000000 0.000000 0.000000
+Kd 0.000000 0.000000 0.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+
+
+newmtl nails
+Ns 141.176471
+Ka 0.000000 0.000000 0.000000
+Kd 0.812591 0.666962 0.594837
+Ks 0.267730 0.267730 0.267730
+Ni 1.000000
+d 1.000000
+illum 2
+
+

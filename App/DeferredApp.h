@@ -13,6 +13,10 @@ public:
 
 	inline Scene *getScene() { return &_scene; }
 
+	void update(double fTime, float fElapsedTime, void* pUserContext);
+
+	LRESULT handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 private:
 	static DeferredApp *inst;
 	DeferredApp();

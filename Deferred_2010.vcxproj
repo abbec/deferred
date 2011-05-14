@@ -379,8 +379,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DXUT\Optional\DXUTShapes.cpp" />
+    <ClCompile Include="Scene\Object.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClInclude Include="DXUT\Optional\DXUTShapes.h" />
+    <ClInclude Include="Scene\Object.h" />
     <ClInclude Include="Scene\Scene.h" />
     <None Include="DXUT\Optional\directx.ico" />
     <ClInclude Include="App\DeferredApp.h" />
