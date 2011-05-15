@@ -103,6 +103,28 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 //--------------------------------------------------------------------------------------
 void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext )
 {
+
+	if (!bKeyDown)
+	{
+		switch (nChar)
+		{
+		case 49: case 97:
+			DeferredApp::instance()->set_render_state(DeferredApp::NORMALS);
+			_cprintf("Setting render state to NORMALS.\n");
+			break;
+		case 50: case 98:
+			DeferredApp::instance()->set_render_state(DeferredApp::DEPTH);
+			_cprintf("Setting render state to DEPTH.\n");
+			break;
+		case 53: case 101:
+			DeferredApp::instance()->set_render_state(DeferredApp::FINAL);
+			_cprintf("Setting render state to FINAL_COMPOSIT.\n");
+			break;
+		default:
+			_cprintf("Pressed key: %i\n", nChar);
+		}
+
+	}
 }
 
 

@@ -148,7 +148,7 @@ bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 		}
 		else
 		{
-			 _cwprintf(L"Unimplemented command: %s \n", str_command);
+			 //_cwprintf(L"Unimplemented command: %s \n", str_command);
 		}
 
 		infile.ignore(1000, '\n');
@@ -196,7 +196,7 @@ bool Object::set_up_mesh()
     DWORD dwNumAttr = 1;
     D3DX10_ATTRIBUTE_RANGE* pAttr = new D3DX10_ATTRIBUTE_RANGE[dwNumAttr];
     if( !pAttr )
-        return E_OUTOFMEMORY;
+        return false;
 
     pAttr[0].AttribId = 0;
     pAttr[0].FaceStart = 0;
@@ -212,7 +212,7 @@ bool Object::set_up_mesh()
 	if (FAILED(hr))
 		return false;
 
-	_cprintf("Done! Number of vertices: %i, faces: %i", _mesh->GetVertexCount(), _mesh->GetFaceCount());
+	_cprintf("Done! Number of vertices: %i, faces: %i\n", _mesh->GetVertexCount(), _mesh->GetFaceCount());
 
 	// Load texture
 	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(_device, L"Media\\Textures\\fur2.jpg", NULL, NULL, &_texture_RV, NULL )))
