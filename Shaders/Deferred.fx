@@ -11,6 +11,9 @@ float SpecularIntensity;
 Texture2D AlbedoTexture;
 
 //--------------------------------------------------------------------------------------
+Texture2D Normals;
+Texture2D Depth;
+
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
@@ -25,6 +28,17 @@ struct VS_INPUT
 	float2 TexCoord : TEXCOORD;
 };
 
+struct PS_OUTPUT
+{
+	float4 normal : SV_TARGET0;
+	float4 depth : SV_TARGET1;
+};
+
+struct VS_SCREENOUTPUT
+{
+    float4 Position   : SV_POSITION; // vertex position  
+};
+
 // Texture sampler
 SamplerState samLinear
 {
@@ -36,7 +50,7 @@ SamplerState samLinear
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-VS_OUTPUT VS( VS_INPUT input )
+VS_OUTPUT GBufferVS( VS_INPUT input )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
 
@@ -57,21 +71,55 @@ VS_OUTPUT VS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS( VS_OUTPUT input ) : SV_Target
+PS_OUTPUT GBufferPS( VS_OUTPUT input ) : SV_Target
 {
-	float4 normal = normalize(input.Normal);
+	PS_OUTPUT output;
 
-    return AlbedoTexture.Sample( samLinear, input.TexCoord );
+	// Render to g_buffer
+	output.normal = normalize(input.Normal);
+	float4 pos = input.Pos;
+	output.depth = pos.z/pos.w;
+
+	return output;
 }
 
 
 //--------------------------------------------------------------------------------------
-technique10 Render
+// Render to quad
+//--------------------------------------------------------------------------------------
+VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION)
+{
+	VS_SCREENOUTPUT Output;
+    Output.Position = pos;
+
+    return Output;
+}
+
+
+float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
+{
+	float4 pos = Input.Position;
+	//return float4(pos.x, pos.y, 0.0, 0.0);
+	return Normals.Load(float3(pos.xy, 0));
+}
+
+//--------------------------------------------------------------------------------------
+technique10 GeometryStage
 {
     pass P0
     {
-        SetVertexShader( CompileShader( vs_4_0, VS() ) );
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_4_0, PS() ) );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS() ) );
+    }
+}
+
+technique10 RenderToQuad
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, ScreenPS() ) );
     }
 }

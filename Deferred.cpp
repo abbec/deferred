@@ -44,7 +44,7 @@ HRESULT CALLBACK OnD3D10CreateDevice( ID3D10Device* pd3dDevice, const DXGI_SURFA
 HRESULT CALLBACK OnD3D10ResizedSwapChain( ID3D10Device* pd3dDevice, IDXGISwapChain* pSwapChain,
                                           const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext )
 {
-	DeferredApp::instance()->initBuffers(pd3dDevice);
+	DeferredApp::instance()->initBuffers(pd3dDevice, pBackBufferSurfaceDesc);
     return S_OK;
 }
 
