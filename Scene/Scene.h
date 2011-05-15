@@ -2,6 +2,7 @@
 #define _SCENE_H
 #include "DXUTcamera.h"
 #include "Object.h"
+#include <vector>
 
 class Scene
 {
@@ -14,17 +15,13 @@ public:
 	void rotate(D3DXVECTOR3 &at);
 
 	void update(double fTime, float fElapsedTime, void* pUserContext);
-	void bump_shader_variables();
 
 	LRESULT handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 
-	// Meshes
-	ID3DX10Mesh *_sphere;
-	ID3DX10Mesh *_teapot;
-
-	Deferred::Object _object;
+// Objects
+	std::vector<Deferred::Object *> _objects;
 
 	ID3D10EffectShaderResourceVariable *_texture_SR;
 	ID3D10EffectMatrixVariable *_worldVariable;
@@ -39,6 +36,7 @@ private:
 	D3DXMATRIX _world_view_inv;
 
 	CModelViewerCamera _camera;
+void bump_shader_variables();
 	
 };
 #endif // _SCENE_H

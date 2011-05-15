@@ -10,10 +10,14 @@ DeferredApp::DeferredApp() :
 _device(NULL), _time(0.0), 
 _elapsed_time(0.0), _user_context(NULL),
 _scene(), _layout(NULL), _effect(NULL), _geometry_stage(NULL),
-_g_normals(NULL), _g_depth(NULL), _quad_layout(NULL), _quad_VB(NULL)
+_quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL)
 {
-	_g_buffer_views[0] = _g_buffer_views[1] = NULL;
-	_g_buffer_SRV[0] = _g_buffer_SRV[1] = NULL;
+	for (int i = 0; i < GBUFFER_SIZE; ++i)
+	{
+		_g_textures[i] = NULL;
+		_g_buffer_views[i] = NULL;
+		_g_buffer_SRV[i] = NULL;
+	}
 }
 
 DeferredApp::~DeferredApp()
@@ -24,15 +28,12 @@ DeferredApp::~DeferredApp()
 	if (_effect != NULL)
 		_effect->Release();
 
-	SAFE_RELEASE(_g_normals);
-
-	SAFE_RELEASE(_g_depth);
-
-	SAFE_RELEASE(_g_buffer_views[0]);
-	SAFE_RELEASE(_g_buffer_views[1]);
-
-	SAFE_RELEASE(_g_buffer_SRV[0]);
-	SAFE_RELEASE(_g_buffer_SRV[1]);
+	for (int i = 0; i < GBUFFER_SIZE; ++i)
+	{
+		SAFE_RELEASE(_g_textures[i]);
+		SAFE_RELEASE(_g_buffer_views[i]);
+		SAFE_RELEASE(_g_buffer_SRV[i]);
+	}
 
 	SAFE_RELEASE(_quad_VB);
 	SAFE_RELEASE(_quad_layout);
@@ -98,6 +99,7 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
     };
 
 	_render_to_quad = _effect->GetTechniqueByName( "RenderToQuad" );
+	_render_normals_to_quad = _effect->GetTechniqueByName( "RenderNormalsToQuad" );
 	_render_to_quad->GetPassByIndex( 0 )->GetDesc( &PassDesc );
 	hr = _device->CreateInputLayout( screenlayout, 1, PassDesc.pIAInputSignature,
                                              PassDesc.IAInputSignatureSize, &_quad_layout);
@@ -107,9 +109,6 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 		_cprintf("Creation of input layout failed!");
 		return hr;
 	}
-
-
-	//_g_buffer_SR = _effect->GetVariableByName("g_buffer");
 
 	device->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
@@ -152,25 +151,10 @@ bool DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *bac
     Desc.CPUAccessFlags = 0;
     Desc.MiscFlags = 0;
 
-	device->CreateTexture2D(&Desc, NULL, &_g_normals);
-	device->CreateTexture2D(&Desc, NULL, &_g_depth);
-
 	D3D10_RENDER_TARGET_VIEW_DESC RTVDesc;
     RTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
     RTVDesc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
     RTVDesc.Texture2D.MipSlice = 0;
-
-	if FAILED(device->CreateRenderTargetView(_g_normals, &RTVDesc, &_g_buffer_views[0]))
-	{
-		_cprintf("Creation of render target view failed.");
-		return false;
-	}
-
-	if FAILED(device->CreateRenderTargetView(_g_depth, &RTVDesc, &_g_buffer_views[1]))
-	{
-		_cprintf("Creation of render target view failed.");
-		return false;
-	}
 
 	// Shader resource views
 	D3D10_SHADER_RESOURCE_VIEW_DESC SRVDesc;
@@ -179,8 +163,28 @@ bool DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *bac
     SRVDesc.Texture2D.MostDetailedMip = 0;
     SRVDesc.Texture2D.MipLevels = Desc.MipLevels;
 
-    device->CreateShaderResourceView(_g_normals, &SRVDesc, &_g_buffer_SRV[0] );
-    device->CreateShaderResourceView(_g_depth, &SRVDesc, &_g_buffer_SRV[1] );
+	for (int i = 0; i < GBUFFER_SIZE; ++i)
+	{
+
+		if FAILED(device->CreateTexture2D(&Desc, NULL, &_g_textures[i]))
+		{
+			_cprintf("Creation of texture failed.");
+			return false;
+		}
+
+		if FAILED(device->CreateRenderTargetView(_g_textures[i], &RTVDesc, &_g_buffer_views[i]))
+		{
+			_cprintf("Creation of render target view failed.");
+			return false;
+		}
+
+		if FAILED(device->CreateShaderResourceView(_g_textures[i], &SRVDesc, &_g_buffer_SRV[i] ))
+		{
+			_cprintf("Creation of shader resource view failed.");
+			return false;
+		}
+		
+	}
 
 	return true;
 }
@@ -213,7 +217,6 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	// Fill G-buffers
 	geometry_stage();
 
-
 	// P-buffers
 
 
@@ -225,7 +228,16 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 void DeferredApp::render_to_quad()
 {
 	// Render the particles
-    ID3D10EffectTechnique* pRenderTechnique = _render_to_quad;
+    ID3D10EffectTechnique* pRenderTechnique;
+
+	switch (_render_state)
+	{
+	case NORMALS:
+		pRenderTechnique = _render_normals_to_quad;
+		break;
+	default:
+		pRenderTechnique = _render_to_quad;
+	}
 
     //IA setup
     _device->IASetInputLayout( _quad_layout );
@@ -241,6 +253,7 @@ void DeferredApp::render_to_quad()
 
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( _g_buffer_SRV[0] );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );
+	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( _g_buffer_SRV[2] );
 
     //Render
     D3D10_TECHNIQUE_DESC techDesc;
@@ -255,6 +268,7 @@ void DeferredApp::render_to_quad()
 	// Un-set this resource, as it's associated with an OM output
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( NULL );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( NULL );
+	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
     for( UINT p = 0; p < techDesc.Passes; ++p )
     {
         pRenderTechnique->GetPassByIndex( p )->Apply( 0 );
@@ -268,8 +282,11 @@ void DeferredApp::geometry_stage()
     {
         0, 0, 0, 0
     };
-    _device->ClearRenderTargetView( _g_buffer_views[0], color );
-    _device->ClearRenderTargetView( _g_buffer_views[1], color );
+
+	for (int i = 0; i < GBUFFER_SIZE; ++i)
+	{
+		_device->ClearRenderTargetView( _g_buffer_views[i], color);
+	}
 
 	// get the old render targets
     ID3D10RenderTargetView* pOldRTV;
@@ -277,15 +294,16 @@ void DeferredApp::geometry_stage()
     _device->OMGetRenderTargets( 1, &pOldRTV, &pOldDSV );
 
 	// Set the new render targets
-    ID3D10RenderTargetView *views[2];
-	views[0] = _g_buffer_views[0];
-    views[1] = _g_buffer_views[1];
-    _device->OMSetRenderTargets( 2, views, pOldDSV);
+    ID3D10RenderTargetView *views[GBUFFER_SIZE];
+
+	for (int i = 0; i < GBUFFER_SIZE; ++i)
+	{
+		views[i] = _g_buffer_views[i];
+	}
+
+    _device->OMSetRenderTargets(GBUFFER_SIZE, views, pOldDSV);
 
 	_device->IASetInputLayout(_layout);
-
-	_scene.bump_shader_variables();
-
 
     D3D10_TECHNIQUE_DESC techDesc;
 	
