@@ -181,8 +181,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 	AllocConsole();
 	SetConsoleTitle(L"SuperConsole");
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+	SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_INTENSITY); // Mega-cool green text ;)
 	_cprintf("Starting application...GO!\n");
+	_cprintf("Maximum render targets supported: %i\n", D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT);
 
 	DeferredApp *app = DeferredApp::instance();
 
