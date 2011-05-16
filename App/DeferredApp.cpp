@@ -100,6 +100,7 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 
 	_render_to_quad = _effect->GetTechniqueByName( "RenderToQuad" );
 	_render_normals_to_quad = _effect->GetTechniqueByName( "RenderNormalsToQuad" );
+	_render_depth_to_quad = _effect->GetTechniqueByName( "RenderDepthToQuad" );
 	_render_to_quad->GetPassByIndex( 0 )->GetDesc( &PassDesc );
 	hr = _device->CreateInputLayout( screenlayout, 1, PassDesc.pIAInputSignature,
                                              PassDesc.IAInputSignatureSize, &_quad_layout);
@@ -154,7 +155,7 @@ bool DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *bac
 	D3D10_RENDER_TARGET_VIEW_DESC RTVDesc;
     RTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
     RTVDesc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
-    RTVDesc.Texture2D.MipSlice = 0;
+    RTVDesc.Texture2D.MipSlice = 0; // Use mip slice 0
 
 	// Shader resource views
 	D3D10_SHADER_RESOURCE_VIEW_DESC SRVDesc;
@@ -234,6 +235,9 @@ void DeferredApp::render_to_quad()
 	{
 	case NORMALS:
 		pRenderTechnique = _render_normals_to_quad;
+		break;
+	case DEPTH:
+		pRenderTechnique = _render_depth_to_quad;
 		break;
 	default:
 		pRenderTechnique = _render_to_quad;

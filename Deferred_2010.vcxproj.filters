@@ -18,6 +18,9 @@
     <Filter Include="Scene">
       <UniqueIdentifier>{724e788e-7f27-4816-80ad-236385c5d7ed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{5615d387-fc82-4300-8256-80e8e068ced0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="DXUT\Optional\directx.ico">
@@ -98,6 +101,9 @@
     <ClCompile Include="Scene\Light.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
+    <ClCompile Include="Util\BoundingFrustum.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App\DeferredApp.h">
@@ -114,6 +120,9 @@
     </ClInclude>
     <ClInclude Include="Scene\Light.h">
       <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\BoundingFrustum.h">
+      <Filter>Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

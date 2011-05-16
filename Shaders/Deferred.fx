@@ -1,6 +1,12 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
+
+cbuffer NeverChange
+{
+	float FarClipDistance;
+}
+
 matrix World;
 matrix View;
 matrix WorldViewInverse;
@@ -21,6 +27,7 @@ Texture2D Albedo;
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
+	float4 VS_Pos : POSITION0;
     float4 Normal : NORMAL;
 	float2 TexCoord : TEXCOORD;
 };
@@ -35,7 +42,7 @@ struct VS_INPUT
 struct PS_OUTPUT
 {
 	float4 normal : SV_TARGET0;
-	float depth : SV_TARGET1;
+	float4 depth : SV_TARGET1;
 	float4 albedo : SV_TARGET2;
 };
 
@@ -59,10 +66,11 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
 
-	// Transform into world coordinates
+	// Transform position to view space
 	output.Pos = float4(input.Pos, 1.0);
     output.Pos = mul(output.Pos , World );
 	output.Pos = mul(output.Pos, View);
+	output.VS_Pos = output.Pos; 
 	output.Pos = mul(output.Pos, Projection);
 
 	// View space normal
@@ -79,14 +87,14 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-PS_OUTPUT GBufferPS( VS_OUTPUT input ) : SV_Target
+PS_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
 {
 	PS_OUTPUT output;
 
 	// Render to g_buffer
 	output.normal = normalize(input.Normal);
-	float4 pos = input.Pos;
-	output.depth = pos.z/pos.w;
+	float depth = -input.VS_Pos.z/FarClipDistance;
+	output.depth = float4(depth, depth, depth, 1.0);
 	output.albedo = AlbedoTexture.Sample( samLinear, input.TexCoord );
 
 	return output;
@@ -108,6 +116,7 @@ VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION)
 float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 {
 	float4 pos = Input.Position;
+	float4 depth;
 
 	return Albedo.Load(float3(pos.xy, 0));
 }
@@ -119,10 +128,14 @@ float4 ScreenNormalsPS(VS_SCREENOUTPUT Input) : SV_Target
 	return Normals.Load(float3(pos.xy, 0));
 }
 
+float4 ScreenDepthPS(VS_SCREENOUTPUT Input) : SV_Target
+{
+	float4 pos = Input.Position;
+
+	return Depth.Load(float3(pos.xy, 0));
+}
+
 //--------------------------------------------------------------------------------------
-
-
-// For rendering different states
 
 
 technique10 GeometryStage
@@ -135,7 +148,10 @@ technique10 GeometryStage
     }
 }
 
-technique10 RenderToQuad
+
+// For rendering different states
+
+technique10 RenderToQuad // Final compositing
 {
     pass P0
     {
@@ -152,5 +168,15 @@ technique10 RenderNormalsToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenNormalsPS() ) );
+    }
+}
+
+technique10 RenderDepthToQuad
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, ScreenDepthPS() ) );
     }
 }
