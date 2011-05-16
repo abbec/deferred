@@ -46,9 +46,9 @@ private:
 	UINT _render_state;
 
 	// G-buffer
-	ID3D10RenderTargetView *_g_buffer_views[3];
-	ID3D10ShaderResourceView *_g_buffer_SRV[3];
-	ID3D10Texture2D *_g_textures[3];
+	ID3D10RenderTargetView *_g_buffer_views[GBUFFER_SIZE];
+	ID3D10ShaderResourceView *_g_buffer_SRV[GBUFFER_SIZE];
+	ID3D10Texture2D *_g_textures[GBUFFER_SIZE];
 
 
 	void geometry_stage();
