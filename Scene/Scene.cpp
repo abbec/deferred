@@ -60,6 +60,10 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	_camera.SetProjParams(( float )D3DX_PI * 0.5f, width / ( float )height, 0.1f, 100.0f);
 	_camera.SetWindow(width, height);
 
+	effect->GetVariableByName("FarClipDistance")->AsScalar()->SetFloat(_camera.GetFarClip());
+
+	_camera.SetEnablePositionMovement(true);
+
 	return S_OK;
 }
 
