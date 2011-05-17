@@ -65,11 +65,6 @@ D3DXVECTOR3* BoundingFrustum::get_corners()
 
 D3DXVECTOR3 BoundingFrustum::intersect_3_planes(Plane p1, Plane p2, Plane p3)
 {
-	// Normalize vectors
-	//D3DXVec3Normalize(&p1.normal, &p1.normal);
-	//D3DXVec3Normalize(&p2.normal, &p2.normal);
-	//D3DXVec3Normalize(&p3.normal, &p3.normal);
-
 	// Compute cross products
 	D3DXVECTOR3 n2_x_n3;
 	D3DXVec3Cross(&n2_x_n3, &p2.normal, &p3.normal);
@@ -82,5 +77,6 @@ D3DXVECTOR3 BoundingFrustum::intersect_3_planes(Plane p1, Plane p2, Plane p3)
 
 	float n1_dot_n2_x_n3 = D3DXVec3Dot(&p1.normal, &n2_x_n3);
 
+	// Calculate intersection point. Can be assumed to exist!
 	return (-p1.d*(n2_x_n3) - p2.d*(n3_x_n1) - p3.d*(n1_x_n2))/(n1_dot_n2_x_n3);
 }

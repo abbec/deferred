@@ -102,6 +102,9 @@
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+    <SourcePath>$(SolutionDir)Src;$(SourcePath)</SourcePath>
+    <IntDir>Obj\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\Bin\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
     <LinkIncremental>false</LinkIncremental>
@@ -217,7 +220,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <AdditionalIncludeDirectories>DXUT\Core;DXUT\Optional;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Src\DXUT\Core;Src\DXUT\Optional;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -248,6 +251,9 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <BuildLog>
+      <Path>Obj\$(IntDir)\$(MSBuildProjectName).log</Path>
+    </BuildLog>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
     <ClCompile>
@@ -378,53 +384,46 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DXUT\Optional\DXUTShapes.cpp" />
-    <ClCompile Include="Scene\Light.cpp" />
-    <ClCompile Include="Scene\Object.cpp" />
-    <ClCompile Include="Scene\Scene.cpp" />
-    <ClCompile Include="Util\BoundingFrustum.cpp" />
-    <ClInclude Include="DXUT\Optional\DXUTShapes.h" />
-    <ClInclude Include="Scene\Light.h" />
-    <ClInclude Include="Scene\Object.h" />
-    <ClInclude Include="Scene\Scene.h" />
-    <ClInclude Include="Util\BoundingFrustum.h" />
-    <None Include="DXUT\Optional\directx.ico" />
-    <ClInclude Include="App\DeferredApp.h" />
-    <ClInclude Include="DXUT\Core\DXUT.h" />
-    <ClInclude Include="DXUT\Core\DXUTenum.h" />
-    <ClInclude Include="DXUT\Core\DXUTmisc.h" />
-    <ClCompile Include="App\DeferredApp.cpp" />
-    <ClCompile Include="DXUT\Core\DXUT.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
+    <ClCompile Include="Src\App\DeferredApp.cpp" />
+    <ClCompile Include="Src\Deferred.cpp" />
+    <ClCompile Include="Src\DXUT\Core\DXUT.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="DXUT\Core\DXUTenum.cpp" />
-    <ClCompile Include="DXUT\Core\DXUTmisc.cpp" />
-    <ClInclude Include="DXUT\Optional\DXUTcamera.h" />
-    <ClInclude Include="DXUT\Optional\DXUTgui.h" />
-    <ClInclude Include="DXUT\Optional\DXUTres.h" />
-    <ClInclude Include="DXUT\Optional\DXUTsettingsdlg.h" />
-    <ClInclude Include="DXUT\Optional\SDKmesh.h" />
-    <ClInclude Include="DXUT\Optional\SDKmisc.h" />
-    <ClCompile Include="DXUT\Optional\DXUTcamera.cpp" />
-    <ClCompile Include="DXUT\Optional\DXUTgui.cpp" />
-    <ClCompile Include="DXUT\Optional\DXUTres.cpp" />
-    <ClCompile Include="DXUT\Optional\DXUTsettingsdlg.cpp" />
-    <ClCompile Include="DXUT\Optional\SDKmesh.cpp" />
-    <ClCompile Include="DXUT\Optional\SDKmisc.cpp" />
-    <None Include="Shaders\Deferred.fx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Deferred.cpp" />
-  </ItemGroup>
-  <ItemGroup>
+    <ClCompile Include="Src\DXUT\Core\DXUTenum.cpp" />
+    <ClCompile Include="Src\DXUT\Core\DXUTmisc.cpp" />
+    <ClCompile Include="Src\DXUT\Optional\DXUTcamera.cpp" />
+    <ClCompile Include="Src\DXUT\Optional\DXUTgui.cpp" />
+    <ClCompile Include="Src\DXUT\Optional\DXUTres.cpp" />
+    <ClCompile Include="Src\DXUT\Optional\DXUTsettingsdlg.cpp" />
+    <ClCompile Include="Src\DXUT\Optional\DXUTShapes.cpp" />
+    <ClCompile Include="Src\DXUT\Optional\SDKmesh.cpp" />
+    <ClCompile Include="Src\DXUT\Optional\SDKmisc.cpp" />
+    <ClCompile Include="Src\Scene\Light.cpp" />
+    <ClCompile Include="Src\Scene\Object.cpp" />
+    <ClCompile Include="Src\Scene\Scene.cpp" />
+    <ClCompile Include="Src\Util\BoundingFrustum.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h" />
+    <ClInclude Include="Src\App\DeferredApp.h" />
+    <ClInclude Include="Src\DXUT\Core\DXUT.h" />
+    <ClInclude Include="Src\DXUT\Core\DXUTenum.h" />
+    <ClInclude Include="Src\DXUT\Core\DXUTmisc.h" />
+    <ClInclude Include="Src\DXUT\Optional\DXUTcamera.h" />
+    <ClInclude Include="Src\DXUT\Optional\DXUTgui.h" />
+    <ClInclude Include="Src\DXUT\Optional\DXUTres.h" />
+    <ClInclude Include="Src\DXUT\Optional\DXUTsettingsdlg.h" />
+    <ClInclude Include="Src\DXUT\Optional\DXUTShapes.h" />
+    <ClInclude Include="Src\DXUT\Optional\SDKmesh.h" />
+    <ClInclude Include="Src\DXUT\Optional\SDKmisc.h" />
+    <ClInclude Include="Src\Scene\Light.h" />
+    <ClInclude Include="Src\Scene\Object.h" />
+    <ClInclude Include="Src\Scene\Scene.h" />
+    <ClInclude Include="Src\Util\BoundingFrustum.h" />
     <ResourceCompile Include="Deferred.rc" />
   </ItemGroup>
   <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
+    <None Include="Src\DXUT\Optional\directx.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

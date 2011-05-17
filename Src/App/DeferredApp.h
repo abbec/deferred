@@ -44,7 +44,7 @@ private:
 
 	ID3D10Effect *_effect;
 	ID3D10EffectTechnique *_geometry_stage, *_render_to_quad, *_render_normals_to_quad;
-	ID3D10EffectTechnique *_render_depth_to_quad;
+	ID3D10EffectTechnique *_render_depth_to_quad, *_render_albedo_to_quad;
 	ID3D10InputLayout *_layout, *_quad_layout;
 	ID3D10EffectVariable *_g_buffer_SR;
 

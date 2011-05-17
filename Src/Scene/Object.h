@@ -35,6 +35,9 @@ public:
 	void render();
 	ID3D10ShaderResourceView *get_texture() { return _texture_RV; }
 
+	//void set_transform(D3DXMATRIX *transform) { _transform = *transform; }
+	//const *D3DXMATRIX get_transform() { return &_transform; }
+
 private:
 
 	bool set_up_mesh();
@@ -47,6 +50,8 @@ private:
 	std::map<UINT, VertexEntry> _unique_verts;
 
 	ID3D10ShaderResourceView *_texture_RV;
+
+	D3DXMATRIX _transform;
 
 };
 

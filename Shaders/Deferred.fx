@@ -7,18 +7,23 @@ cbuffer NeverChange
 	float FarClipDistance;
 }
 
-matrix World;
-matrix View;
-matrix WorldViewInverse;
-matrix Projection;
+cbuffer everyFrame
+{
+	matrix World;
+	matrix View;
+	matrix WorldViewInverse;
+	matrix Projection;
+	float SpecularIntensity;
+}
 
-float SpecularIntensity;
+//--------------------------------------------------------------------------------------
 
 Texture2D AlbedoTexture;
 
+// Far clipping plane corners.
+// Needed for view space position
+// reconstruction.
 float3 FarPlaneCorners[4];
-
-//--------------------------------------------------------------------------------------
 
 // -----GBuffer--- //
 Texture2D Normals;
@@ -64,7 +69,7 @@ SamplerState samLinear
 };
 
 //--------------------------------------------------------------------------------------
-// Vertex Shader
+// G Buffer Vertex Shader
 //--------------------------------------------------------------------------------------
 VS_OUTPUT GBufferVS( VS_INPUT input )
 {
@@ -89,7 +94,7 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 
 
 //--------------------------------------------------------------------------------------
-// Pixel Shader
+// G Buffer Pixel Shader
 //--------------------------------------------------------------------------------------
 PS_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
 {
@@ -146,6 +151,13 @@ float4 ScreenDepthPS(VS_SCREENOUTPUT Input) : SV_Target
 	return Depth.Load(float3(pos.xy, 0));
 }
 
+float4 ScreenAlbedoPS(VS_SCREENOUTPUT Input) : SV_Target
+{
+	float4 pos = Input.Position;
+
+	return Albedo.Load(float3(pos.xy, 0));
+}
+
 //--------------------------------------------------------------------------------------
 
 
@@ -189,5 +201,15 @@ technique10 RenderDepthToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenDepthPS() ) );
+    }
+}
+
+technique10 RenderAlbedoToQuad
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, ScreenAlbedoPS() ) );
     }
 }
