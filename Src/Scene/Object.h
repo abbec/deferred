@@ -35,8 +35,8 @@ public:
 	void render();
 	ID3D10ShaderResourceView *get_texture() { return _texture_RV; }
 
-	//void set_transform(D3DXMATRIX *transform) { _transform = *transform; }
-	//const *D3DXMATRIX get_transform() { return &_transform; }
+	void set_transform(D3DXMATRIX *transform) { _transform = *transform; }
+	const D3DXMATRIX *get_transform() { return &_transform; }
 
 private:
 

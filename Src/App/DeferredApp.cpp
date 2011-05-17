@@ -318,8 +318,8 @@ void DeferredApp::geometry_stage()
     _geometry_stage->GetDesc( &techDesc );
     for( UINT p = 0; p < techDesc.Passes; ++p )
     {
-		_geometry_stage->GetPassByIndex( p )->Apply( 0 );
-		_scene.render(_device);
+		;
+		_scene.render(_device, _geometry_stage->GetPassByIndex( p ));
 	}
 
 	// restore the original render targets

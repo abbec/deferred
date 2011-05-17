@@ -11,7 +11,7 @@ public:
 	~Scene();
 
 	HRESULT init(ID3D10Device *device, ID3D10Effect *effect);
-	void render(ID3D10Device *device);
+	void render(ID3D10Device *device, ID3D10EffectPass *pass);
 	void rotate(D3DXVECTOR3 &at);
 
 	void update(double fTime, float fElapsedTime, void* pUserContext);

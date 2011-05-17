@@ -17,6 +17,9 @@
     <Filter Include="Scene">
       <UniqueIdentifier>{88dbf1e9-9dfa-425e-b53e-34f9bf0252f4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{ab88dff9-a671-4e9d-83f7-0a06abdeb2bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -122,6 +125,9 @@
   <ItemGroup>
     <None Include="Src\DXUT\Optional\directx.ico">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Shaders\Deferred.fx">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>
