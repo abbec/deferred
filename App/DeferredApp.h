@@ -2,6 +2,13 @@
 #define _DEFERRED_APP
 #include "../Scene/Scene.h"
 
+
+struct QuadVertex
+{
+	D3DXVECTOR3 position;
+	D3DXVECTOR3 tex_plus_frustum;
+};
+
 class DeferredApp
 {
 public:

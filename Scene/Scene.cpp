@@ -4,6 +4,7 @@
 #include <cassert>
 #include <iostream>
 #include <conio.h>
+#include "..\Util\BoundingFrustum.h"
 
 Scene::Scene() :
 _worldVariable(NULL),
@@ -40,10 +41,11 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	_wv_inverse = effect->GetVariableByName( "WorldViewInverse" )->AsMatrix();
 	_spec_intensity_var = effect->GetVariableByName( "SpecularIntensity" )->AsScalar();
 	_texture_SR = effect->GetVariableByName("AlbedoTexture")->AsShaderResource();
+	_far_plane_corners_variable = effect->GetVariableByName("FarPlaneCorners")->AsVector();
 
 	// Objects
 	Deferred::Object *obj = new Deferred::Object();
-	if (!obj->read_from_obj(device, "Media\\viking.obj"))
+	if (!obj->read_from_obj(device, "Media\\monkey.obj"))
 		_cprintf("Error in initializing OBJ object! \n");
 
 	_objects.push_back(obj);
@@ -63,6 +65,11 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	effect->GetVariableByName("FarClipDistance")->AsScalar()->SetFloat(_camera.GetFarClip());
 
 	_camera.SetEnablePositionMovement(true);
+
+	D3DXVECTOR3 d;
+	D3DXVec3Normalize(&d, &(At-Eye));
+
+	D3DXVECTOR3 test = Eye + d*100.0;
 
 	return S_OK;
 }
@@ -88,9 +95,25 @@ void Scene::bump_shader_variables()
     _viewVariable->SetMatrix( ( float* )&_view );
     _projectionVariable->SetMatrix( ( float* )&_projection );
 
-	D3DXMATRIX world_view;
+	D3DXMATRIX world_view, view_proj;
 
 	world_view = _world * _view;
+	view_proj = _view * _projection;
+
+	Deferred::BoundingFrustum fr(view_proj);
+
+	D3DXVECTOR3 *corners = fr.get_corners();
+	D3DXVECTOR4 res;
+
+	// Transform back to view space
+	for (int i = 0; i < 4; i++)
+	{
+		D3DXVec3Transform(&res, &corners[i], &_view);
+		corners[i] = D3DXVECTOR3(res.x, res.y, res.z);
+	}
+
+	_far_plane_corners_variable->SetFloatVectorArray((float*) corners, 0, 4);
+
 	D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
 	D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 	_wv_inverse->SetMatrix((float *)&_world_view_inv);
