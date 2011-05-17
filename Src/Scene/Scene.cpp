@@ -115,7 +115,7 @@ void Scene::bump_shader_variables()
 	_spec_intensity_var->SetFloat(0.8);
 }
 
-void Scene::render(ID3D10Device *device)
+void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 {
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
 
@@ -127,6 +127,9 @@ void Scene::render(ID3D10Device *device)
 		// Get the object texture
 		// TODO: Use materials with properties
 		_texture_SR->SetResource(o->get_texture());
+
+		// Apply the shader and draw geometry
+		pass->Apply(0);
 		o->render();
 		++it;
 	}
