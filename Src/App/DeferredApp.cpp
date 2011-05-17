@@ -1,5 +1,4 @@
 #include "DXUT.h"
-//#include "../Scene/Scene.h"
 #include "DeferredApp.h"
 #include <iostream>
 #include <conio.h>
@@ -102,6 +101,7 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 	_render_to_quad = _effect->GetTechniqueByName( "RenderToQuad" );
 	_render_normals_to_quad = _effect->GetTechniqueByName( "RenderNormalsToQuad" );
 	_render_depth_to_quad = _effect->GetTechniqueByName( "RenderDepthToQuad" );
+	_render_albedo_to_quad = _effect->GetTechniqueByName( "RenderAlbedoToQuad" );
 	_render_to_quad->GetPassByIndex( 0 )->GetDesc( &PassDesc );
 	hr = _device->CreateInputLayout( screenlayout, 2, PassDesc.pIAInputSignature,
                                              PassDesc.IAInputSignatureSize, &_quad_layout);
@@ -239,6 +239,9 @@ void DeferredApp::render_to_quad()
 		break;
 	case DEPTH:
 		pRenderTechnique = _render_depth_to_quad;
+		break;
+	case ALBEDO:
+		pRenderTechnique = _render_albedo_to_quad;
 		break;
 	default:
 		pRenderTechnique = _render_to_quad;

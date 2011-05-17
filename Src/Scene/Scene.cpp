@@ -45,7 +45,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 
 	// Objects
 	Deferred::Object *obj = new Deferred::Object();
-	if (!obj->read_from_obj(device, "Media\\monkey.obj"))
+	if (!obj->read_from_obj(device, "Media\\viking.obj"))
 		_cprintf("Error in initializing OBJ object! \n");
 
 	_objects.push_back(obj);
@@ -65,11 +65,6 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	effect->GetVariableByName("FarClipDistance")->AsScalar()->SetFloat(_camera.GetFarClip());
 
 	_camera.SetEnablePositionMovement(true);
-
-	D3DXVECTOR3 d;
-	D3DXVec3Normalize(&d, &(At-Eye));
-
-	D3DXVECTOR3 test = Eye + d*100.0;
 
 	return S_OK;
 }

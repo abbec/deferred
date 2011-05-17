@@ -116,6 +116,10 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 			DeferredApp::instance()->set_render_state(DeferredApp::DEPTH);
 			_cprintf("Setting render state to DEPTH.\n");
 			break;
+		case 51: case 99:
+			DeferredApp::instance()->set_render_state(DeferredApp::ALBEDO);
+			_cprintf("Setting render state to ALBEDO_TEXTURE.\n");
+			break;
 		case 53: case 101:
 			DeferredApp::instance()->set_render_state(DeferredApp::FINAL);
 			_cprintf("Setting render state to FINAL_COMPOSIT.\n");
