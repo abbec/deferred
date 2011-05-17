@@ -16,6 +16,8 @@ float SpecularIntensity;
 
 Texture2D AlbedoTexture;
 
+float3 FarPlaneCorners[4];
+
 //--------------------------------------------------------------------------------------
 
 // -----GBuffer--- //
@@ -48,7 +50,9 @@ struct PS_OUTPUT
 
 struct VS_SCREENOUTPUT
 {
-    float4 Position   : SV_POSITION; // vertex position  
+    float4 Position   : SV_POSITION; // vertex position
+	float3 FrustumCorner : TEXCOORD0;
+	float2 TexCoords : TEXCOORD1;
 };
 
 // Texture sampler
@@ -104,10 +108,13 @@ PS_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
 //--------------------------------------------------------------------------------------
 // Render to quad
 //--------------------------------------------------------------------------------------
-VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION)
+VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
 {
 	VS_SCREENOUTPUT Output;
     Output.Position = pos;
+
+	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
+	Output.TexCoords = texCoords.xy;
 
     return Output;
 }
@@ -116,9 +123,13 @@ VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION)
 float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 {
 	float4 pos = Input.Position;
-	float4 depth;
+	float depth = Depth.Load(float3(pos.xy, 0)).r;
 
-	return Albedo.Load(float3(pos.xy, 0));
+	// Reconstruct view space position
+	float4 position = float4(depth * Input.FrustumCorner, 0.0);
+
+	return position;
+	//return Albedo.Sample(float3(pos.xy, 0));
 }
 
 float4 ScreenNormalsPS(VS_SCREENOUTPUT Input) : SV_Target

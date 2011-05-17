@@ -96,13 +96,14 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 	const D3D10_INPUT_ELEMENT_DESC screenlayout[] =
     {
         { "POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D10_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,  D3D10_INPUT_PER_VERTEX_DATA, 0 },
     };
 
 	_render_to_quad = _effect->GetTechniqueByName( "RenderToQuad" );
 	_render_normals_to_quad = _effect->GetTechniqueByName( "RenderNormalsToQuad" );
 	_render_depth_to_quad = _effect->GetTechniqueByName( "RenderDepthToQuad" );
 	_render_to_quad->GetPassByIndex( 0 )->GetDesc( &PassDesc );
-	hr = _device->CreateInputLayout( screenlayout, 1, PassDesc.pIAInputSignature,
+	hr = _device->CreateInputLayout( screenlayout, 2, PassDesc.pIAInputSignature,
                                              PassDesc.IAInputSignatureSize, &_quad_layout);
 
 	if (FAILED(hr))
@@ -115,18 +116,18 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 
 	// Create the screen quad
 	D3D10_BUFFER_DESC BDesc;
-    BDesc.ByteWidth = 4 * sizeof( D3DXVECTOR3 );
+    BDesc.ByteWidth = 4 * sizeof( QuadVertex );
     BDesc.Usage = D3D10_USAGE_IMMUTABLE;
     BDesc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
     BDesc.CPUAccessFlags = 0;
     BDesc.MiscFlags = 0;
 
-    D3DXVECTOR3 verts[4] =
+    QuadVertex verts[] =
     {
-        D3DXVECTOR3( -1, -1, 0.5f ),
-        D3DXVECTOR3( -1, 1, 0.5f ),
-        D3DXVECTOR3( 1, -1, 0.5f ),
-        D3DXVECTOR3( 1, 1, 0.5f )
+		{ D3DXVECTOR3( -1, -1, 0.5f ), D3DXVECTOR3(0.0, 1.0, 1.0)},
+        { D3DXVECTOR3( -1, 1, 0.5f ), D3DXVECTOR3(0.0, 0.0, 0.0)},
+        { D3DXVECTOR3( 1, -1, 0.5f ), D3DXVECTOR3(1.0, 1.0, 2.0)},
+        { D3DXVECTOR3( 1, 1, 0.5f ), D3DXVECTOR3(1.0, 0.0, 3.0)},
     };
     D3D10_SUBRESOURCE_DATA InitData;
     InitData.pSysMem = verts;
@@ -249,7 +250,7 @@ void DeferredApp::render_to_quad()
     UINT Offsets[1];
     ID3D10Buffer* pVB[1];
     pVB[0] = _quad_VB;
-    Strides[0] = sizeof( D3DXVECTOR3 );
+    Strides[0] = sizeof( QuadVertex );
     Offsets[0] = 0;
     _device->IASetVertexBuffers( 0, 1, pVB, Strides, Offsets );
     _device->IASetIndexBuffer( NULL, DXGI_FORMAT_R16_UINT, 0 );

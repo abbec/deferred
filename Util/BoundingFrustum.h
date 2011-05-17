@@ -8,6 +8,16 @@ struct Plane
 {
 	D3DXVECTOR3 normal;
 	float d;
+
+	inline void normalize()
+	{
+		float denom = 1 / sqrt((normal.x*normal.x) + (normal.y*normal.y) + (normal.z*normal.z));
+		normal.x = normal.x * denom;
+		normal.y = normal.y * denom;
+		normal.z = normal.z * denom;
+		d = d * denom;
+
+	}
 };
 
 class BoundingFrustum
