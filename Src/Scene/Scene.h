@@ -2,6 +2,9 @@
 #define _SCENE_H
 #include "DXUTcamera.h"
 #include "Object.h"
+#include "Light.h"
+#include "DirectionalLight.h"
+#include "PointLight.h"
 #include <vector>
 
 class Scene
@@ -12,6 +15,7 @@ public:
 
 	HRESULT init(ID3D10Device *device, ID3D10Effect *effect);
 	void render(ID3D10Device *device, ID3D10EffectPass *pass);
+	void draw_lights(ID3D10Device *device);
 	void rotate(D3DXVECTOR3 &at);
 
 	void update(double fTime, float fElapsedTime, void* pUserContext);
@@ -22,7 +26,10 @@ private:
 
 // Objects
 	std::vector<Deferred::Object *> _objects;
+	std::vector<Deferred::Light *> _lights;
 
+	ID3D10Effect *_effect;
+	
 	ID3D10EffectShaderResourceVariable *_texture_SR;
 	ID3D10EffectMatrixVariable *_worldVariable;
 	ID3D10EffectVectorVariable *_far_plane_corners_variable;
@@ -37,7 +44,10 @@ private:
 	D3DXMATRIX _world_view_inv;
 
 	CModelViewerCamera _camera;
-void bump_shader_variables();
+
+	D3DXVECTOR3 _ambient_color;
+	
+	void bump_shader_variables(const D3DXMATRIX *translation);
 	
 };
 #endif // _SCENE_H

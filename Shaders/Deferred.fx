@@ -5,6 +5,7 @@
 cbuffer NeverChange
 {
 	float FarClipDistance;
+	float4 Ambient;
 }
 
 cbuffer everyFrame
@@ -14,6 +15,7 @@ cbuffer everyFrame
 	matrix WorldViewInverse;
 	matrix Projection;
 	float SpecularIntensity;
+	float SpecularRoughness;
 }
 
 //--------------------------------------------------------------------------------------
@@ -29,7 +31,10 @@ float3 FarPlaneCorners[4];
 Texture2D Normals;
 Texture2D Depth;
 Texture2D Albedo;
+Texture2D SpecularInfo;
 // -------------- //
+
+Texture2D FinalImage;
 
 struct VS_OUTPUT
 {
@@ -46,11 +51,12 @@ struct VS_INPUT
 	float2 TexCoord : TEXCOORD;
 };
 
-struct PS_OUTPUT
+struct PS_MRT_OUTPUT
 {
 	float4 normal : SV_TARGET0;
 	float4 depth : SV_TARGET1;
 	float4 albedo : SV_TARGET2;
+	float4 specularInfo : SV_TARGET3;
 };
 
 struct VS_SCREENOUTPUT
@@ -96,19 +102,37 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 // G Buffer Pixel Shader
 //--------------------------------------------------------------------------------------
-PS_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
+PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
 {
-	PS_OUTPUT output;
+	PS_MRT_OUTPUT output;
 
 	// Render to g_buffer
 	output.normal = normalize(input.Normal);
 	float depth = -input.VS_Pos.z/FarClipDistance;
 	output.depth = float4(depth, depth, depth, 1.0);
 	output.albedo = AlbedoTexture.Sample( samLinear, input.TexCoord );
+	output.specularInfo = float4(SpecularIntensity, SpecularRoughness, 1.0, 1.0);
 
 	return output;
 }
 
+VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
+{
+	VS_SCREENOUTPUT Output;
+    Output.Position = pos;
+
+	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
+	Output.TexCoords = texCoords.xy;
+
+    return Output;
+}
+
+float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
+{
+	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy);
+	return Ambient * float4(color, 0.0);
+	//return float4(1.0, 0.0, 0.0, 1.0);
+}
 
 //--------------------------------------------------------------------------------------
 // Render to quad
@@ -133,8 +157,7 @@ float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 	// Reconstruct view space position
 	float4 position = float4(depth * Input.FrustumCorner, 0.0);
 
-	return position;
-	//return Albedo.Sample(float3(pos.xy, 0));
+	return FinalImage.Load(float3(pos.xy, 0));
 }
 
 float4 ScreenNormalsPS(VS_SCREENOUTPUT Input) : SV_Target
@@ -171,6 +194,16 @@ technique10 GeometryStage
     }
 }
 
+
+technique10 AmbientLight
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, AmbientLightVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, AmbientLightPS() ) );
+    }
+}
 
 // For rendering different states
 

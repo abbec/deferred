@@ -7,8 +7,8 @@
 #include "..\Util\BoundingFrustum.h"
 
 Scene::Scene() :
-_worldVariable(NULL),
-_viewVariable(NULL), _projectionVariable(NULL)
+_worldVariable(NULL), _effect(NULL),
+_viewVariable(NULL), _projectionVariable(NULL), _ambient_color(0.1, 0.1, 0.1)
 {
 	
 }
@@ -25,6 +25,8 @@ Scene::~Scene()
 
 		++it;
 	}
+
+	//SAFE_RELEASE(_effect);
 }
 
 HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
@@ -34,35 +36,51 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
     UINT width = rc.right - rc.left;
     UINT height = rc.bottom - rc.top;
 
+	_effect = effect;
+
     // Obtain the variables
-    _worldVariable = effect->GetVariableByName( "World" )->AsMatrix();
-    _viewVariable = effect->GetVariableByName( "View" )->AsMatrix();
-    _projectionVariable = effect->GetVariableByName( "Projection" )->AsMatrix();
-	_wv_inverse = effect->GetVariableByName( "WorldViewInverse" )->AsMatrix();
-	_spec_intensity_var = effect->GetVariableByName( "SpecularIntensity" )->AsScalar();
-	_texture_SR = effect->GetVariableByName("AlbedoTexture")->AsShaderResource();
-	_far_plane_corners_variable = effect->GetVariableByName("FarPlaneCorners")->AsVector();
+    _worldVariable = _effect->GetVariableByName( "World" )->AsMatrix();
+    _viewVariable = _effect->GetVariableByName( "View" )->AsMatrix();
+    _projectionVariable = _effect->GetVariableByName( "Projection" )->AsMatrix();
+	_wv_inverse = _effect->GetVariableByName( "WorldViewInverse" )->AsMatrix();
+	_spec_intensity_var = _effect->GetVariableByName( "SpecularIntensity" )->AsScalar();
+	_texture_SR = _effect->GetVariableByName("AlbedoTexture")->AsShaderResource();
+	_far_plane_corners_variable = _effect->GetVariableByName("FarPlaneCorners")->AsVector();
 
 	// Objects
 	Deferred::Object *obj = new Deferred::Object();
+	if (!obj->read_from_obj(device, "Media\\monkey.obj"))
+		_cprintf("Error in initializing OBJ object! \n");
+
+	D3DXMATRIX translate;
+	D3DXMatrixTranslation(&translate, -10.5f, 0.0f, 0.0f);
+	obj->set_transform(translate);
+
+	_objects.push_back(obj);
+
+	// Viking
+	obj = new Deferred::Object();
 	if (!obj->read_from_obj(device, "Media\\viking.obj"))
 		_cprintf("Error in initializing OBJ object! \n");
 
 	_objects.push_back(obj);
 
-	// TODO: Set up lighting
+	// Set up lighting
+	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
+		D3DXVECTOR3(2.0, 1.0, 2.0), (D3DXVECTOR3(2.0, 1.0, 2.0) - D3DXVECTOR3(0.0, 0.0, 0.0))));
 
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
 
 	// Set up a ModelView Camera
-	D3DXVECTOR3 Eye( 2.0f, 1.0f, 2.0f );
+	D3DXVECTOR3 Eye( 0.0f, 0.0f, 2.0f );
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
 	_camera.SetViewParams(&Eye, &At);
 	_camera.SetProjParams(( float )D3DX_PI * 0.5f, width / ( float )height, 0.1f, 100.0f);
 	_camera.SetWindow(width, height);
 
-	effect->GetVariableByName("FarClipDistance")->AsScalar()->SetFloat(_camera.GetFarClip());
+	_effect->GetVariableByName("FarClipDistance")->AsScalar()->SetFloat(_camera.GetFarClip());
+	effect->GetVariableByName("Ambient")->AsVector()->SetFloatVector((float *) _ambient_color);
 
 	_camera.SetEnablePositionMovement(true);
 
@@ -79,10 +97,11 @@ LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	return _camera.HandleMessages(hWnd, uMsg, wParam, lParam);
 }
 
-void Scene::bump_shader_variables()
+void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 {
     // Update variables
 	_world = *_camera.GetWorldMatrix();
+	D3DXMatrixMultiply(&_world, &_world, translation);
 	_view = *_camera.GetViewMatrix();
 	_projection = *_camera.GetProjMatrix();
 
@@ -122,7 +141,7 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 	while (it != _objects.end())
 	{
 		Deferred::Object *o = *it;
-		bump_shader_variables();
+		bump_shader_variables(o->get_transform());
 
 		// Get the object texture
 		// TODO: Use materials with properties
@@ -133,4 +152,32 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 		o->render();
 		++it;
 	}
+}
+
+void Scene::draw_lights(ID3D10Device *device)
+{
+	D3D10_TECHNIQUE_DESC techDesc;
+	
+	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("AmbientLight");
+	tech->GetDesc( &techDesc );
+
+    for( UINT p = 0; p < techDesc.Passes; ++p )
+    {
+		tech->GetPassByIndex(p)->Apply(0);
+		device->Draw(4, 0);
+	}
+
+	// Go through all the lights in the scene
+	/*std::vector<Deferred::Light *>::iterator it = _lights.begin();
+
+	while (it != _lights.end())
+	{
+		Deferred::Light *light = *it;
+		if (light->get_type() == Deferred::Light::DIRECTIONAL)
+		{
+
+		}
+
+		++it;
+	}*/
 }

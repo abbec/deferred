@@ -28,7 +28,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\iris_test.jpg
+map_Kd Textures\\iris.jpg
 
 
 newmtl HAT
@@ -39,9 +39,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0062_S.jpg
-map_Bump C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0062_S.jpg
-
+map_Kd Textures\\fabric2.jpg
 
 newmtl HORN
 Ns 468.627451
@@ -52,7 +50,6 @@ Ni 1.000000
 d 1.000000
 illum 2
 
-
 newmtl Material
 Ns 66.666667
 Ka 0.000000 0.000000 0.000000
@@ -61,7 +58,6 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-
 
 newmtl Material.001_Untitled.003
 Ns 66.666667
@@ -72,7 +68,6 @@ Ni 1.000000
 d 1.000000
 illum 1
 map_Kd Untitled
-
 
 newmtl Material.002_Untitled.002
 Ns 66.666667
@@ -93,7 +88,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd C:\Users\Stina\Desktop\Leather0088_S.jpg
+map_Kd Textures\\leather.jpg
 
 
 newmtl belt
@@ -104,8 +99,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0063_S.jpg
-map_Bump C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\FabricPlain0063_S.jpg
+map_Kd Textures\\fabric2.jpg
 
 
 newmtl belt_Leather0088_S.jpg
@@ -116,14 +110,14 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd C:\Users\Stina\Desktop\Leather0088_S.jpg
+map_Kd Textures\\leather.jpg
 
 
 newmtl gold
 Ns 717.647059
 Ka 0.000000 0.000000 0.000000
 Kd 1.000000 0.800000 0.260693
-Ks 1.094956 1.094956 1.094956
+Ks 1.000000 1.000000 1.000000
 Ni 1.000000
 d 1.000000
 illum 2
@@ -137,8 +131,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\Fur0018_1_S.jpg
-map_Bump C:\\Users\\Albert\\Programming\\School\\ACGP Projekt\\Models\\Users\\Stina\\Desktop\\Fur0018_1_S.jpg
+map_Kd Textures\\fur.jpg
 
 
 newmtl iris

@@ -18,6 +18,7 @@ const UINT Object::NUM_LAYOUT_ELMS = sizeof(LAYOUT) / sizeof(LAYOUT[0]);
 Object::Object() :
 _mesh(NULL), _texture_RV(NULL)
 {
+	D3DXMatrixIdentity(&_transform);
 }
 
 Object::~Object()
