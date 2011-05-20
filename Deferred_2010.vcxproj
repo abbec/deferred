@@ -402,7 +402,6 @@
     <ClCompile Include="Src\DXUT\Optional\DXUTShapes.cpp" />
     <ClCompile Include="Src\DXUT\Optional\SDKmesh.cpp" />
     <ClCompile Include="Src\DXUT\Optional\SDKmisc.cpp" />
-    <ClCompile Include="Src\Scene\Light.cpp" />
     <ClCompile Include="Src\Scene\Object.cpp" />
     <ClCompile Include="Src\Scene\Scene.cpp" />
     <ClCompile Include="Src\Util\BoundingFrustum.cpp" />
@@ -420,8 +419,11 @@
     <ClInclude Include="Src\DXUT\Optional\DXUTShapes.h" />
     <ClInclude Include="Src\DXUT\Optional\SDKmesh.h" />
     <ClInclude Include="Src\DXUT\Optional\SDKmisc.h" />
+    <ClInclude Include="Src\Scene\DirectionalLight.h" />
     <ClInclude Include="Src\Scene\Light.h" />
+    <ClInclude Include="Src\Scene\Material.h" />
     <ClInclude Include="Src\Scene\Object.h" />
+    <ClInclude Include="Src\Scene\PointLight.h" />
     <ClInclude Include="Src\Scene\Scene.h" />
     <ClInclude Include="Src\Util\BoundingFrustum.h" />
     <ResourceCompile Include="Deferred.rc" />

@@ -73,6 +73,15 @@
     <ClInclude Include="Src\Scene\Scene.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Scene\PointLight.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Scene\DirectionalLight.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Scene\Material.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Deferred.cpp" />
@@ -111,9 +120,6 @@
     </ClCompile>
     <ClCompile Include="Src\App\DeferredApp.cpp">
       <Filter>App</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\Scene\Light.cpp">
-      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Src\Scene\Object.cpp">
       <Filter>Scene</Filter>

@@ -7,7 +7,7 @@ DeferredApp *DeferredApp::inst = NULL;
 
 DeferredApp::DeferredApp() :
 _device(NULL), _time(0.0), 
-_elapsed_time(0.0), _user_context(NULL),
+_elapsed_time(0.0), _user_context(NULL), _backbuffer(NULL), _depth_stencil(NULL),
 _scene(), _layout(NULL), _effect(NULL), _geometry_stage(NULL),
 _quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL)
 {
@@ -17,6 +17,13 @@ _quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL)
 		_g_buffer_views[i] = NULL;
 		_g_buffer_SRV[i] = NULL;
 	}
+
+	for (int i = 0; i < PBUFFER_SIZE; ++i)
+	{
+		_p_textures[i] = NULL;
+		_p_buffer_views[i] = NULL;
+		_p_buffer_SRV[i] = NULL;
+	}
 }
 
 DeferredApp::~DeferredApp()
@@ -24,8 +31,7 @@ DeferredApp::~DeferredApp()
 	if (_layout != NULL)
 		_layout->Release();
 
-	if (_effect != NULL)
-		_effect->Release();
+	SAFE_RELEASE(_effect);
 
 	for (int i = 0; i < GBUFFER_SIZE; ++i)
 	{
@@ -34,8 +40,17 @@ DeferredApp::~DeferredApp()
 		SAFE_RELEASE(_g_buffer_SRV[i]);
 	}
 
+	for (int i = 0; i < PBUFFER_SIZE; ++i)
+	{
+		SAFE_RELEASE(_p_textures[i]);
+		SAFE_RELEASE(_p_buffer_views[i]);
+		SAFE_RELEASE(_p_buffer_SRV[i]);
+	}
+
 	SAFE_RELEASE(_quad_VB);
 	SAFE_RELEASE(_quad_layout);
+	SAFE_RELEASE(_backbuffer);
+	SAFE_RELEASE(_depth_stencil);
 
 	inst = NULL;
 }
@@ -188,6 +203,29 @@ bool DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *bac
 		
 	}
 
+	for (int i = 0; i < PBUFFER_SIZE; ++i)
+	{
+
+		if FAILED(device->CreateTexture2D(&Desc, NULL, &_p_textures[i]))
+		{
+			_cprintf("Creation of texture failed.");
+			return false;
+		}
+
+		if FAILED(device->CreateRenderTargetView(_p_textures[i], &RTVDesc, &_p_buffer_views[i]))
+		{
+			_cprintf("Creation of render target view failed.");
+			return false;
+		}
+
+		if FAILED(device->CreateShaderResourceView(_p_textures[i], &SRVDesc, &_p_buffer_SRV[i] ))
+		{
+			_cprintf("Creation of shader resource view failed.");
+			return false;
+		}
+		
+	}
+
 	return true;
 }
 
@@ -198,7 +236,6 @@ void DeferredApp::update(double fTime, float fElapsedTime, void* pUserContext)
 
 LRESULT DeferredApp::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-
 	// Pass user messages on to the scene
 	_scene.handle_messages(hWnd, uMsg, wParam, lParam);
 
@@ -211,25 +248,40 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_elapsed_time = fElapsedTime;
 	_user_context = pUserContext;
 
-	// Clear render target and the depth stencil 
     float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    pd3dDevice->ClearRenderTargetView( DXUTGetD3D10RenderTargetView(), ClearColor );
-    pd3dDevice->ClearDepthStencilView( DXUTGetD3D10DepthStencilView(), D3D10_CLEAR_DEPTH, 1.0, 0 );
+
+	// Get the old render targets
+    _device->OMGetRenderTargets( 1, &_backbuffer, &_depth_stencil );
+    
+	// Clear frambuffer and depth stencil
+	_device->ClearRenderTargetView(_backbuffer, ClearColor);
+    _device->ClearDepthStencilView(_depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0);
+	
+	// Clear G-buffers
+	for (int i = 0; i < GBUFFER_SIZE; ++i)
+		_device->ClearRenderTargetView( _g_buffer_views[i], ClearColor);
+
+	for (int i = 0; i < PBUFFER_SIZE; ++i)
+		_device->ClearRenderTargetView( _p_buffer_views[i], ClearColor);
 
 	// Fill G-buffers
 	geometry_stage();
 
-	// P-buffers
+	// Lighting stage (Remember to clear depth stencil... :) )
+	pd3dDevice->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
+	lighting_stage();
 
-
+	// Reset backbuffer as render target
+	// and clear the depth stencil.
+	_device->OMSetRenderTargets( 1, &_backbuffer, _depth_stencil );
+	pd3dDevice->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
+	
 	//Final composition
 	render_to_quad();
-
 }
 
 void DeferredApp::render_to_quad()
 {
-	// Render the particles
     ID3D10EffectTechnique* pRenderTechnique;
 
 	switch (_render_state)
@@ -247,7 +299,7 @@ void DeferredApp::render_to_quad()
 		pRenderTechnique = _render_to_quad;
 	}
 
-    //IA setup
+    // Input Assembly setup
     _device->IASetInputLayout( _quad_layout );
     UINT Strides[1];
     UINT Offsets[1];
@@ -263,6 +315,8 @@ void DeferredApp::render_to_quad()
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( _g_buffer_SRV[2] );
 
+	_effect->GetVariableByName("FinalImage")->AsShaderResource()->SetResource( _p_buffer_SRV[0] );
+
     //Render
     D3D10_TECHNIQUE_DESC techDesc;
     pRenderTechnique->GetDesc( &techDesc );
@@ -277,30 +331,57 @@ void DeferredApp::render_to_quad()
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( NULL );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( NULL );
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
+	_effect->GetVariableByName("FinalImage")->AsShaderResource()->SetResource( NULL );
+    
+}
+
+void DeferredApp::lighting_stage()
+{
+	// Set the new render targets
+    ID3D10RenderTargetView *views[PBUFFER_SIZE];
+
+	for (int i = 0; i < PBUFFER_SIZE; ++i)
+		views[i] = _p_buffer_views[i];
+
+    _device->OMSetRenderTargets(PBUFFER_SIZE, views, _depth_stencil);
+
+	//IA setup
+    _device->IASetInputLayout( _quad_layout );
+    UINT Strides[1];
+    UINT Offsets[1];
+    ID3D10Buffer* pVB[1];
+    pVB[0] = _quad_VB;
+    Strides[0] = sizeof( QuadVertex );
+    Offsets[0] = 0;
+    _device->IASetVertexBuffers( 0, 1, pVB, Strides, Offsets );
+    _device->IASetIndexBuffer( NULL, DXGI_FORMAT_R16_UINT, 0 );
+    _device->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP );
+
+	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( _g_buffer_SRV[0] );
+    _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );
+	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( _g_buffer_SRV[2] );
+	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource( _g_buffer_SRV[3] );
+	
+	D3D10_TECHNIQUE_DESC techDesc;
+	
+	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("AmbientLight");
+	tech->GetDesc( &techDesc );
+
     for( UINT p = 0; p < techDesc.Passes; ++p )
     {
-        pRenderTechnique->GetPassByIndex( p )->Apply( 0 );
-    }
+		tech->GetPassByIndex(p)->Apply(0);
+		_device->Draw(4, 0);
+	}
+
+	// Un-set this resource, as it's associated with an OM output
+	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( NULL );
+    _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( NULL );
+	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
+	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource(NULL);
 }
 
 void DeferredApp::geometry_stage()
 {
-	// Clear the new render target
-    float color[4] =
-    {
-        0, 0, 0, 0
-    };
-
-	for (int i = 0; i < GBUFFER_SIZE; ++i)
-	{
-		_device->ClearRenderTargetView( _g_buffer_views[i], color);
-	}
-
-	// get the old render targets
-    ID3D10RenderTargetView* pOldRTV;
-    ID3D10DepthStencilView* pOldDSV;
-    _device->OMGetRenderTargets( 1, &pOldRTV, &pOldDSV );
-
 	// Set the new render targets
     ID3D10RenderTargetView *views[GBUFFER_SIZE];
 
@@ -309,7 +390,7 @@ void DeferredApp::geometry_stage()
 		views[i] = _g_buffer_views[i];
 	}
 
-    _device->OMSetRenderTargets(GBUFFER_SIZE, views, pOldDSV);
+    _device->OMSetRenderTargets(GBUFFER_SIZE, views, _depth_stencil);
 
 	_device->IASetInputLayout(_layout);
 
@@ -318,14 +399,6 @@ void DeferredApp::geometry_stage()
     _geometry_stage->GetDesc( &techDesc );
     for( UINT p = 0; p < techDesc.Passes; ++p )
     {
-		;
 		_scene.render(_device, _geometry_stage->GetPassByIndex( p ));
 	}
-
-	// restore the original render targets
-    views[0] = pOldRTV;
-    views[1] = NULL;
-    _device->OMSetRenderTargets( 2, views, pOldDSV );
-    SAFE_RELEASE( pOldRTV );
-    SAFE_RELEASE( pOldDSV );
 }
