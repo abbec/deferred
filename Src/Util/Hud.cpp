@@ -16,7 +16,8 @@ Hud::Hud(ID3D10Device *device) : _device(device)
 
 Hud::~Hud()
 {
-
+	SAFE_RELEASE(_font);
+	SAFE_RELEASE(_sprite);
 }
 
 void Hud::render()
@@ -50,18 +51,19 @@ void Hud::render()
     RECT rc; 
 	rc.bottom = 20;
 	rc.left = 0;
-	rc.right = 20;
+	rc.right = 200;
 	rc.top = 0;
        
     // Start font drawing   
     _sprite->Begin(0);
     // Draw the text to the screen   
-    HRESULT hr = _font->DrawText( _sprite, L"Hej", -1, &rc, DT_LEFT, D3DCOLOR_ARGB(255, 0, 255, 0));   
-
-
+    HRESULT hr = _font->DrawTextW( _sprite, DXUTGetFrameStats(true), -1, &rc, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));   
 
     _sprite->End();
     // Restore the previous blend state   
-	_device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask); 
+	_device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask);
+
+	SAFE_RELEASE(pFontBlendState10);
+	SAFE_RELEASE(pOriginalBlendState10);
 
 }
