@@ -140,9 +140,9 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 
     QuadVertex verts[] =
     {
-		{ D3DXVECTOR3( -1.0, -1.0, 0.5f ), D3DXVECTOR3(0.0, 1.0, 2.0)},
+		{ D3DXVECTOR3( -1.0, -1.0, 0.5f ), D3DXVECTOR3(0.0, 1.0, 1.0)},
 		{ D3DXVECTOR3( -1.0, 1.0, 0.5f ), D3DXVECTOR3(0.0, 0.0, 0.0)},
-		{ D3DXVECTOR3( 1.0, -1.0, 0.5f ), D3DXVECTOR3(1.0, 1.0, 1.0)},
+		{ D3DXVECTOR3( 1.0, -1.0, 0.5f ), D3DXVECTOR3(1.0, 1.0, 2.0)},
         { D3DXVECTOR3( 1.0, 1.0, 0.5f ), D3DXVECTOR3(1.0, 0.0, 3.0)},
     };
     D3D10_SUBRESOURCE_DATA InitData;
@@ -158,6 +158,7 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 
 HRESULT DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *back_buffer_desc)
 {
+	// Make sure the old buffers are released (Mostly on resize)
 	for (int i = 0; i < GBUFFER_SIZE; ++i)
 	{
 		SAFE_RELEASE(_g_textures[i]);
@@ -264,7 +265,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_elapsed_time = fElapsedTime;
 	_user_context = pUserContext;
 
-    float ClearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	// Get the old render targets
     _device->OMGetRenderTargets( 1, &_backbuffer, &_depth_stencil );
@@ -400,26 +401,13 @@ void DeferredApp::lighting_stage()
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( _g_buffer_SRV[2] );
 	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource( _g_buffer_SRV[3] );
 	
-	D3D10_TECHNIQUE_DESC techDesc;
-	
-	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("AmbientLight");
-	tech->GetDesc( &techDesc );
-
-    for( UINT p = 0; p < techDesc.Passes; ++p )
-    {
-		tech->GetPassByIndex(p)->Apply(0);
-		_device->Draw(4, 0);
-	}
+	_scene.draw_lights(_device);
 
 	// Un-set this resource, as it's associated with an OM output
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( NULL );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( NULL );
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
 	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource(NULL);
-	 for( UINT p = 0; p < techDesc.Passes; ++p )
-    {
-		tech->GetPassByIndex(p)->Apply(0);
-	}
 }
 
 void DeferredApp::geometry_stage()

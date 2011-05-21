@@ -15,9 +15,8 @@ _viewVariable(NULL), _projectionVariable(NULL), _ambient_color(0.1, 0.1, 0.1)
 
 Scene::~Scene()
 {
-
+	// Clean up objects
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
-
 	while (it != _objects.end())
 	{
 		Deferred::Object *o = *it;
@@ -26,14 +25,14 @@ Scene::~Scene()
 		++it;
 	}
 
+	// Clean up lights
 	std::vector<Deferred::Light *>::iterator it2 = _lights.begin();
-
 	while (it2 != _lights.end())
 	{
 		Deferred::Light *o = *it2;
 		delete o;
 
-		++it;
+		++it2;
 	}
 }
 
@@ -74,8 +73,8 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	//_objects.push_back(obj);
 
 	// Set up lighting
-	//_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
-//		D3DXVECTOR3(2.0, 1.0, 2.0), (D3DXVECTOR3(2.0, 1.0, 2.0) - D3DXVECTOR3(0.0, 0.0, 0.0))));
+	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
+		D3DXVECTOR3(2.0, 1.0, 2.0), (D3DXVECTOR3(2.0, 1.0, 2.0) - D3DXVECTOR3(0.0, 0.0, 0.0))));
 
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
@@ -149,6 +148,25 @@ void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 	delete[] corners;
 }
 
+void Scene::bump_light_variables(Deferred::Light *l)
+{
+	if (l->get_type() == Deferred::Light::DIRECTIONAL)
+	{
+		Deferred::DirectionalLight *dl = (Deferred::DirectionalLight *) l;
+		_effect->GetVariableByName("LightDirection")->AsVector()->SetFloatVector((float*) dl->get_direction());
+	}
+
+	// Transform light position to view space
+	D3DXMATRIX world_view;
+	world_view = _world * _view;
+	D3DXVECTOR4 temp;
+	D3DXVec3Transform(&temp, &l->get_position(), &world_view);
+	D3DXVECTOR3 light_pos_vs(temp.x, temp.y, temp.z);
+
+	_effect->GetVariableByName("LightPosition")->AsVector()->SetFloatVector((float *) l->get_position());
+	_effect->GetVariableByName("LightColor")->AsVector()->SetFloatVector((float *) l->get_color());
+}
+
 void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 {
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
@@ -174,6 +192,17 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 
 void Scene::draw_lights(ID3D10Device *device)
 {
+	FLOAT OriginalBlendFactor[4];   
+    UINT OriginalSampleMask = 0; 
+    ID3D10BlendState* pOriginalBlendState10=NULL;
+
+	ID3D10DepthStencilView *dsv;
+	ID3D10RenderTargetView *rtv;
+	device->OMGetRenderTargets(1, &rtv, &dsv);  
+
+	// Save the current blend state   
+    device->OMGetBlendState(&pOriginalBlendState10, OriginalBlendFactor, &OriginalSampleMask);   
+
 	D3D10_TECHNIQUE_DESC techDesc;
 	
 	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("AmbientLight");
@@ -185,17 +214,35 @@ void Scene::draw_lights(ID3D10Device *device)
 		device->Draw(4, 0);
 	}
 
+	device->ClearDepthStencilView(dsv, D3D10_CLEAR_DEPTH, 1.0, 0);
+
 	// Go through all the lights in the scene
-	/*std::vector<Deferred::Light *>::iterator it = _lights.begin();
+	std::vector<Deferred::Light *>::iterator it = _lights.begin();
 
 	while (it != _lights.end())
 	{
 		Deferred::Light *light = *it;
 		if (light->get_type() == Deferred::Light::DIRECTIONAL)
-		{
+			tech = _effect->GetTechniqueByName("DirectionalLight");
+		else if (light->get_type() == Deferred::Light::POINT)
+			;
 
+
+		tech->GetDesc( &techDesc );
+
+		for( UINT p = 0; p < techDesc.Passes; ++p )
+		{
+			tech->GetPassByIndex(p)->Apply(0);
+			device->Draw(4, 0);
 		}
 
 		++it;
-	}*/
+	}
+
+	// Restore the previous blend state   
+	device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask);
+
+	SAFE_RELEASE(pOriginalBlendState10);
+	SAFE_RELEASE(rtv);
+	SAFE_RELEASE(dsv);
 }

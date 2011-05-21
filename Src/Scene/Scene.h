@@ -49,6 +49,7 @@ private:
 	D3DXVECTOR3 _ambient_color;
 	
 	void bump_shader_variables(const D3DXMATRIX *translation);
+	void bump_light_variables(Deferred::Light *l);
 	
 };
 #endif // _SCENE_H
