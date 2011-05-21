@@ -54,16 +54,16 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 
 	D3DXMATRIX translate;
 	D3DXMatrixTranslation(&translate, -10.5f, 0.0f, 0.0f);
-	obj->set_transform(translate);
+	//obj->set_transform(translate);
 
 	_objects.push_back(obj);
 
 	// Viking
-	obj = new Deferred::Object();
-	if (!obj->read_from_obj(device, "Media\\viking.obj"))
-		_cprintf("Error in initializing OBJ object! \n");
+	//obj = new Deferred::Object();
+	//if (!obj->read_from_obj(device, "Media\\viking.obj"))
+		//_cprintf("Error in initializing OBJ object! \n");
 
-	_objects.push_back(obj);
+	//_objects.push_back(obj);
 
 	// Set up lighting
 	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 

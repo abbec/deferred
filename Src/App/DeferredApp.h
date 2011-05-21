@@ -1,6 +1,7 @@
 #ifndef _DEFERRED_APP
 #define _DEFERRED_APP
 #include "../Scene/Scene.h"
+#include "../Util/Hud.h"
 
 
 struct QuadVertex
@@ -37,6 +38,8 @@ public:
 private:
 	static DeferredApp *inst;
 	DeferredApp();
+
+	Deferred::Hud *_hud;
 
 	ID3D10Device *_device;
 	double _time;
