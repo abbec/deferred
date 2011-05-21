@@ -82,6 +82,9 @@
     <ClInclude Include="Src\Scene\Material.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Util\Hud.h">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Deferred.cpp" />
@@ -126,6 +129,9 @@
     </ClCompile>
     <ClCompile Include="Src\Scene\Scene.cpp">
       <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\Hud.cpp">
+      <Filter>Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

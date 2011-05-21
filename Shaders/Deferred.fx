@@ -89,7 +89,7 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 	output.Pos = mul(output.Pos, Projection);
 
 	// View space normal
-	output.Normal = float4(input.Normal, 0.0);
+	output.Normal = float4(input.Normal, 1.0);
 	output.Normal = normalize(mul(output.Normal, WorldViewInverse));
     
 	// Pass texture coordinates on
@@ -107,10 +107,10 @@ PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
 	PS_MRT_OUTPUT output;
 
 	// Render to g_buffer
-	output.normal = normalize(input.Normal);
+	output.normal = float4(normalize(input.Normal).xyz, 1.0);
 	float depth = -input.VS_Pos.z/FarClipDistance;
 	output.depth = float4(depth, depth, depth, 1.0);
-	output.albedo = AlbedoTexture.Sample( samLinear, input.TexCoord );
+	output.albedo = float4(AlbedoTexture.Sample( samLinear, input.TexCoord ).rgb, 1.0);
 	output.specularInfo = float4(SpecularIntensity, SpecularRoughness, 1.0, 1.0);
 
 	return output;
@@ -137,7 +137,7 @@ float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 //--------------------------------------------------------------------------------------
 // Render to quad
 //--------------------------------------------------------------------------------------
-VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
+VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION, float3 texCoords : TEXCOORD)
 {
 	VS_SCREENOUTPUT Output;
     Output.Position = pos;
@@ -158,6 +158,8 @@ float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 	float4 position = float4(depth * Input.FrustumCorner, 0.0);
 
 	return FinalImage.Load(float3(pos.xy, 0));
+	//return float4(0.1, 0.1, 0.1, 1.0);
+	//return AlbedoTexture.Sample(samLinear, Input.TexCoords);
 }
 
 float4 ScreenNormalsPS(VS_SCREENOUTPUT Input) : SV_Target

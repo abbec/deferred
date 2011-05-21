@@ -1653,7 +1653,7 @@ void CDXUTTextHelper::Begin()
             // Set projection
             pd3dDevice->RSGetViewports( &cVPs, VPs );
             D3DXMATRIXA16 matProjection;
-            D3DXMatrixOrthoOffCenterLH( &matProjection, ( FLOAT )VPs[0].TopLeftX, ( FLOAT )
+            D3DXMatrixOrthoOffCenterRH( &matProjection, ( FLOAT )VPs[0].TopLeftX, ( FLOAT )
                                         ( VPs[0].TopLeftX + VPs[0].Width ), ( FLOAT )VPs[0].TopLeftY, ( FLOAT )
                                         ( VPs[0].TopLeftY + VPs[0].Height ), 0.1f, 10 );
             m_pSprite10->SetProjectionTransform( &matProjection );

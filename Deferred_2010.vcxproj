@@ -405,6 +405,7 @@
     <ClCompile Include="Src\Scene\Object.cpp" />
     <ClCompile Include="Src\Scene\Scene.cpp" />
     <ClCompile Include="Src\Util\BoundingFrustum.cpp" />
+    <ClCompile Include="Src\Util\Hud.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h" />
@@ -426,6 +427,7 @@
     <ClInclude Include="Src\Scene\PointLight.h" />
     <ClInclude Include="Src\Scene\Scene.h" />
     <ClInclude Include="Src\Util\BoundingFrustum.h" />
+    <ClInclude Include="Src\Util\Hud.h" />
     <ResourceCompile Include="Deferred.rc" />
   </ItemGroup>
   <ItemGroup>
