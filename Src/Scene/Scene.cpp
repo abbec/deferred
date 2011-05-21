@@ -35,8 +35,6 @@ Scene::~Scene()
 
 		++it;
 	}
-
-	//SAFE_RELEASE(_effect);
 }
 
 HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
@@ -147,15 +145,18 @@ void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 	D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 	_wv_inverse->SetMatrix((float *)&_world_view_inv);
 	_spec_intensity_var->SetFloat(0.8);
+
+	delete[] corners;
 }
 
 void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 {
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
+	Deferred::Object *o = NULL;
 
 	while (it != _objects.end())
 	{
-		Deferred::Object *o = *it;
+		o = *it;
 		bump_shader_variables(o->get_transform());
 
 		// Get the object texture
@@ -167,6 +168,8 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 		o->render();
 		++it;
 	}
+
+	o = NULL;
 }
 
 void Scene::draw_lights(ID3D10Device *device)

@@ -23,7 +23,7 @@ public:
 	~DeferredApp();
 
 	HRESULT initScene(ID3D10Device* device);
-	bool initBuffers(ID3D10Device* device, const DXGI_SURFACE_DESC*);
+	HRESULT initBuffers(ID3D10Device* device, const DXGI_SURFACE_DESC*);
 	void render(ID3D10Device* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext);
 
 	inline Scene *getScene() { return &_scene; }

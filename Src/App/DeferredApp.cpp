@@ -156,7 +156,7 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 	return _scene.init(device, _effect);
 }
 
-bool DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *back_buffer_desc)
+HRESULT DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *back_buffer_desc)
 {
 	for (int i = 0; i < GBUFFER_SIZE; ++i)
 	{
