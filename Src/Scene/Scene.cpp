@@ -26,6 +26,16 @@ Scene::~Scene()
 		++it;
 	}
 
+	std::vector<Deferred::Light *>::iterator it2 = _lights.begin();
+
+	while (it2 != _lights.end())
+	{
+		Deferred::Light *o = *it2;
+		delete o;
+
+		++it;
+	}
+
 	//SAFE_RELEASE(_effect);
 }
 
@@ -66,8 +76,8 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	//_objects.push_back(obj);
 
 	// Set up lighting
-	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
-		D3DXVECTOR3(2.0, 1.0, 2.0), (D3DXVECTOR3(2.0, 1.0, 2.0) - D3DXVECTOR3(0.0, 0.0, 0.0))));
+	//_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
+//		D3DXVECTOR3(2.0, 1.0, 2.0), (D3DXVECTOR3(2.0, 1.0, 2.0) - D3DXVECTOR3(0.0, 0.0, 0.0))));
 
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
@@ -77,7 +87,6 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
 	_camera.SetViewParams(&Eye, &At);
 	_camera.SetProjParams(( float )D3DX_PI * 0.5f, width / ( float )height, 0.1f, 100.0f);
-	_camera.SetWindow(width, height);
 
 	_effect->GetVariableByName("FarClipDistance")->AsScalar()->SetFloat(_camera.GetFarClip());
 	effect->GetVariableByName("Ambient")->AsVector()->SetFloatVector((float *) _ambient_color);
@@ -90,6 +99,12 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 void Scene::update(double fTime, float fElapsedTime, void* pUserContext)
 {
 	_camera.FrameMove(fElapsedTime);
+}
+
+HRESULT Scene::set_view(const DXGI_SURFACE_DESC *back_buffer_desc)
+{
+	_camera.SetWindow(back_buffer_desc->Width, back_buffer_desc->Height);
+	return S_OK;
 }
 
 LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

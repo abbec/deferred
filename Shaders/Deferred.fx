@@ -16,6 +16,7 @@ cbuffer everyFrame
 	matrix Projection;
 	float SpecularIntensity;
 	float SpecularRoughness;
+	matrix Ortho;
 }
 
 //--------------------------------------------------------------------------------------
@@ -119,7 +120,8 @@ PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
 VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
 {
 	VS_SCREENOUTPUT Output;
-    Output.Position = pos;
+    //Output.Position = mul(Ortho, pos);
+	Output.Position = pos;
 
 	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
 	Output.TexCoords = texCoords.xy;
@@ -130,8 +132,8 @@ VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOOR
 float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy);
-	return Ambient * float4(color, 0.0);
-	//return float4(1.0, 0.0, 0.0, 1.0);
+	return Ambient * float4(color, 1.0);
+	//return float4(Input.Position.xyz, 1.0);
 }
 
 //--------------------------------------------------------------------------------------
@@ -140,7 +142,8 @@ float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION, float3 texCoords : TEXCOORD)
 {
 	VS_SCREENOUTPUT Output;
-    Output.Position = pos;
+    //Output.Position = mul(pos, Ortho);
+	Output.Position = pos;
 
 	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
 	Output.TexCoords = texCoords.xy;
@@ -158,6 +161,7 @@ float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 	float4 position = float4(depth * Input.FrustumCorner, 0.0);
 
 	return FinalImage.Load(float3(pos.xy, 0));
+	//return pos;
 	//return float4(0.1, 0.1, 0.1, 1.0);
 	//return AlbedoTexture.Sample(samLinear, Input.TexCoords);
 }

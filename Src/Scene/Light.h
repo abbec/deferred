@@ -10,6 +10,8 @@ namespace Deferred
 
 		Light(D3DXVECTOR4 color, UINT type = DIRECTIONAL) : _color(color), _type(type) {}
 
+		virtual ~Light(){}
+
 		D3DXVECTOR4 get_color() { return _color; }
 		UINT get_type() { return _type; }
 

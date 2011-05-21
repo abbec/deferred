@@ -28,8 +28,7 @@ _quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL), _hud(NULL)
 
 DeferredApp::~DeferredApp()
 {
-	if (_layout != NULL)
-		_layout->Release();
+	SAFE_RELEASE(_layout);
 
 	SAFE_RELEASE(_effect);
 
@@ -141,23 +140,38 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 
     QuadVertex verts[] =
     {
-		{ D3DXVECTOR3( -1, -1, 0.0f ), D3DXVECTOR3(0.0, 1.0, 1.0)},
-        { D3DXVECTOR3( -1, 1, -0.0f ), D3DXVECTOR3(0.0, 0.0, 0.0)},
-        { D3DXVECTOR3( 1, -1, -0.0f ), D3DXVECTOR3(1.0, 1.0, 2.0)},
-        { D3DXVECTOR3( 1, 1, -0.0f ), D3DXVECTOR3(1.0, 0.0, 3.0)},
+		{ D3DXVECTOR3( -1.0, -1.0, 0.5f ), D3DXVECTOR3(0.0, 1.0, 2.0)},
+		{ D3DXVECTOR3( -1.0, 1.0, 0.5f ), D3DXVECTOR3(0.0, 0.0, 0.0)},
+		{ D3DXVECTOR3( 1.0, -1.0, 0.5f ), D3DXVECTOR3(1.0, 1.0, 1.0)},
+        { D3DXVECTOR3( 1.0, 1.0, 0.5f ), D3DXVECTOR3(1.0, 0.0, 3.0)},
     };
     D3D10_SUBRESOURCE_DATA InitData;
     InitData.pSysMem = verts;
-    V_RETURN( _device->CreateBuffer( &BDesc, &InitData, &_quad_VB ) );
+    _device->CreateBuffer(&BDesc, &InitData, &_quad_VB);
 
 	// Create HUD
 	_hud = new Deferred::Hud(_device);
 
+	// Init scene
 	return _scene.init(device, _effect);
 }
 
 bool DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *back_buffer_desc)
 {
+	for (int i = 0; i < GBUFFER_SIZE; ++i)
+	{
+		SAFE_RELEASE(_g_textures[i]);
+		SAFE_RELEASE(_g_buffer_views[i]);
+		SAFE_RELEASE(_g_buffer_SRV[i]);
+	}
+
+	for (int i = 0; i < PBUFFER_SIZE; ++i)
+	{
+		SAFE_RELEASE(_p_textures[i]);
+		SAFE_RELEASE(_p_buffer_views[i]);
+		SAFE_RELEASE(_p_buffer_SRV[i]);
+	}
+
 	// Set up MRT
 	D3D10_TEXTURE2D_DESC Desc;
     Desc.Width = back_buffer_desc->Width;
@@ -227,8 +241,8 @@ bool DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *bac
 			return false;
 		}	
 	}
-
-	return true;
+	
+	return _scene.set_view(back_buffer_desc);
 }
 
 void DeferredApp::update(double fTime, float fElapsedTime, void* pUserContext)
@@ -250,7 +264,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_elapsed_time = fElapsedTime;
 	_user_context = pUserContext;
 
-    float ClearColor[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
+    float ClearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 
 	// Get the old render targets
     _device->OMGetRenderTargets( 1, &_backbuffer, &_depth_stencil );
@@ -269,20 +283,26 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	// Fill G-buffers
 	geometry_stage();
 
-	// Lighting stage (Remember to clear depth stencil... :) )
-	pd3dDevice->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
+	// Lighting stage
 	lighting_stage();
 
 	// Reset backbuffer as render target
 	// and clear the depth stencil.
-	pd3dDevice->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
+	_device->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
 	_device->OMSetRenderTargets( 1, &_backbuffer, _depth_stencil );
 	
 	// Final composition
 	render_to_quad();
 
 	// Render text
-	//_hud->render();
+	ID3D10DepthStencilState *old_dss;
+	_device->OMGetDepthStencilState(&old_dss, 0);
+	
+	_hud->render();
+	_device->OMSetDepthStencilState(old_dss, 0);
+	SAFE_RELEASE(old_dss);
+	SAFE_RELEASE(_backbuffer);
+	SAFE_RELEASE(_depth_stencil);
 }
 
 void DeferredApp::render_to_quad()
@@ -315,6 +335,11 @@ void DeferredApp::render_to_quad()
     _device->IASetVertexBuffers( 0, 1, pVB, Strides, Offsets );
     _device->IASetIndexBuffer( NULL, DXGI_FORMAT_R16_UINT, 0 );
     _device->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP );
+
+	D3DXMATRIX ortho;
+	D3DXMatrixOrthoRH(&ortho, 2.0, 2.0, 0.0, 1.0);
+
+	_effect->GetVariableByName("Ortho")->AsMatrix()->SetMatrix((float *) ortho);
 
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( _g_buffer_SRV[0] );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );
@@ -364,6 +389,11 @@ void DeferredApp::lighting_stage()
     _device->IASetVertexBuffers( 0, 1, pVB, Strides, Offsets );
     _device->IASetIndexBuffer( NULL, DXGI_FORMAT_R16_UINT, 0 );
     _device->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP );
+
+	D3DXMATRIX ortho;
+	D3DXMatrixOrthoRH(&ortho, 2.0, 2.0, 0.0, 1.0);
+
+	_effect->GetVariableByName("Ortho")->AsMatrix()->SetMatrix((float *) ortho);
 
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( _g_buffer_SRV[0] );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );

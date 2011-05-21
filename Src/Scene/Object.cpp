@@ -24,11 +24,8 @@ _mesh(NULL), _texture_RV(NULL)
 Object::~Object()
 {
 	// Clean up D3D resources
-	if (_mesh)
-		_mesh->Release();
-
-	if (_texture_RV)
-		_texture_RV->Release();
+	SAFE_RELEASE(_mesh);
+	SAFE_RELEASE(_texture_RV);
 }
 
 bool Object::read_from_obj(ID3D10Device *device, std::string filename)
