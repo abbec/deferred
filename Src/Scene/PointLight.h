@@ -8,13 +8,10 @@ namespace Deferred
 	class PointLight : public Light
 	{
 	public:
-		PointLight(D3DXVECTOR4 color, D3DXVECTOR3 position) : Light(color, Light::POINT),
-			_position(position) {}  
+		PointLight(D3DXVECTOR4 color, D3DXVECTOR3 position) : Light(color, position, Light::POINT) {}  
 
-		D3DXVECTOR3 get_position() { return _position; }
 
 	private:
-		D3DXVECTOR3 _position;
 	};
 }
 

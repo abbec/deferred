@@ -17,6 +17,9 @@ cbuffer everyFrame
 	float SpecularIntensity;
 	float SpecularRoughness;
 	matrix Ortho;
+	float3 LightDir;
+	float4 LightColor;
+	float3 LightPosition;
 }
 
 //--------------------------------------------------------------------------------------
@@ -73,6 +76,19 @@ SamplerState samLinear
     Filter = MIN_MAG_MIP_LINEAR;
     AddressU = Clamp;
     AddressV = Clamp;
+};
+
+
+BlendState SrcColorBlendingAdd
+{
+    BlendEnable[0] = TRUE;
+    SrcBlend = SRC_COLOR;
+    DestBlend = ONE;
+    BlendOp = ADD;
+    SrcBlendAlpha = ZERO;
+    DestBlendAlpha = ZERO;
+    BlendOpAlpha = ADD;
+    RenderTargetWriteMask[0] = 0x0F;
 };
 
 //--------------------------------------------------------------------------------------
@@ -136,13 +152,52 @@ float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	//return float4(Input.Position.xyz, 1.0);
 }
 
+// Directional lights
+VS_SCREENOUTPUT DirectionalLightVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
+{
+	VS_SCREENOUTPUT Output;
+	Output.Position = pos;
+
+	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
+	Output.TexCoords = texCoords.xy;
+
+    return Output;
+}
+
+float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
+{
+	// Get the normal
+	float4 normal = float4(Normals.Sample(samLinear, Input.TexCoords.xy).xyz, 1.0);
+
+	// Texture color
+	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy);
+	float3 specInfo = SpecularInfo.Sample(samLinear, Input.TexCoords.xy);
+
+	// Reconstruct position
+	float depth = Depth.Load(float3(Input.Position.xy, 0)).r;
+	float4 position = float4(depth * Input.FrustumCorner, 0.0);
+
+	float3 lightDir = LightPosition - position.xyz;
+
+	// Create half vector
+	float3 viewDir = -normalize(position.xyz/position.w);
+	float3 H = normalize(viewDir + lightDir);
+
+	float HdotN = max(dot(H, normal), 0.0);
+
+	float3 specular = color * pow(HdotN, specInfo.g);
+	float3 diffuse = color * max(0.0f, dot(normal, lightDir));
+
+	//return float4(specular + diffuse, 1.0);
+	return position;
+}
+
 //--------------------------------------------------------------------------------------
 // Render to quad
 //--------------------------------------------------------------------------------------
 VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION, float3 texCoords : TEXCOORD)
 {
 	VS_SCREENOUTPUT Output;
-    //Output.Position = mul(pos, Ortho);
 	Output.Position = pos;
 
 	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
@@ -154,16 +209,9 @@ VS_SCREENOUTPUT ScreenVS(float4 pos : POSITION, float3 texCoords : TEXCOORD)
 
 float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 {
-	float4 pos = Input.Position;
-	float depth = Depth.Load(float3(pos.xy, 0)).r;
-
-	// Reconstruct view space position
-	float4 position = float4(depth * Input.FrustumCorner, 0.0);
+	float4 pos = Input.Position;	
 
 	return FinalImage.Load(float3(pos.xy, 0));
-	//return pos;
-	//return float4(0.1, 0.1, 0.1, 1.0);
-	//return AlbedoTexture.Sample(samLinear, Input.TexCoords);
 }
 
 float4 ScreenNormalsPS(VS_SCREENOUTPUT Input) : SV_Target
@@ -208,6 +256,18 @@ technique10 AmbientLight
         SetVertexShader( CompileShader( vs_4_0, AmbientLightVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, AmbientLightPS() ) );
+
+		SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+    }
+}
+
+technique10 DirectionalLight
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, DirectionalLightVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, DirectionalLightPS() ) );
     }
 }
 
