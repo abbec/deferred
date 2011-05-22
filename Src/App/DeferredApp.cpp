@@ -9,7 +9,7 @@ DeferredApp::DeferredApp() :
 _device(NULL), _time(0.0), 
 _elapsed_time(0.0), _user_context(NULL), _backbuffer(NULL), _depth_stencil(NULL),
 _scene(), _layout(NULL), _effect(NULL), _geometry_stage(NULL),
-_quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL), _hud(NULL)
+_quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL), _hud(NULL), _deferred(false)
 {
 	for (int i = 0; i < GBUFFER_SIZE; ++i)
 	{
@@ -83,7 +83,7 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 
 	ID3D10Blob *ppErrors = NULL;
 	// Create a shader
-	hr = D3DX10CreateEffectFromFile( L"Shaders\\Deferred.fx", NULL, NULL, "fx_4_0", dwShaderFlags, 0, device, NULL,
+	hr = D3DX10CreateEffectFromFileW( L"Shaders\\Deferred.fx", NULL, NULL, "fx_4_0", dwShaderFlags, 0, device, NULL,
                                          NULL, &_effect, &ppErrors, NULL );
 
     if( FAILED( hr ) )
@@ -274,26 +274,44 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_device->ClearRenderTargetView(_backbuffer, ClearColor);
     _device->ClearDepthStencilView(_depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0);
 	
-	// Clear G-buffers
-	for (int i = 0; i < GBUFFER_SIZE; ++i)
-		_device->ClearRenderTargetView( _g_buffer_views[i], ClearColor);
 
-	for (int i = 0; i < PBUFFER_SIZE; ++i)
-		_device->ClearRenderTargetView( _p_buffer_views[i], ClearColor);
+	if (_deferred)
+	{
+		// Clear G-buffers
+		for (int i = 0; i < GBUFFER_SIZE; ++i)
+			_device->ClearRenderTargetView( _g_buffer_views[i], ClearColor);
 
-	// Fill G-buffers
-	geometry_stage();
+		for (int i = 0; i < PBUFFER_SIZE; ++i)
+			_device->ClearRenderTargetView( _p_buffer_views[i], ClearColor);
 
-	// Lighting stage
-	lighting_stage();
+		// Fill G-buffers
+		geometry_stage();
 
-	// Reset backbuffer as render target
-	// and clear the depth stencil.
-	_device->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
-	_device->OMSetRenderTargets( 1, &_backbuffer, _depth_stencil );
+		// Lighting stage
+		lighting_stage();
+
+		// Reset backbuffer as render target
+		// and clear the depth stencil.
+		_device->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
+		_device->OMSetRenderTargets( 1, &_backbuffer, _depth_stencil );
 	
-	// Final composition
-	render_to_quad();
+		// Final composition
+		render_to_quad();
+	}
+	else
+	{
+
+		ID3D10EffectTechnique *temp = _effect->GetTechniqueByName("GBufferToScreen");
+		_device->IASetInputLayout(_layout);
+
+		D3D10_TECHNIQUE_DESC techDesc;
+	
+		temp->GetDesc( &techDesc );
+	
+		// Render scene
+		for( UINT p = 0; p < techDesc.Passes; ++p )
+			_scene.render(_device, temp->GetPassByIndex( p ));
+	}
 
 	// Render text
 	ID3D10DepthStencilState *old_dss;
@@ -337,11 +355,6 @@ void DeferredApp::render_to_quad()
     _device->IASetIndexBuffer( NULL, DXGI_FORMAT_R16_UINT, 0 );
     _device->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP );
 
-	D3DXMATRIX ortho;
-	D3DXMatrixOrthoRH(&ortho, 2.0, 2.0, 0.0, 1.0);
-
-	_effect->GetVariableByName("Ortho")->AsMatrix()->SetMatrix((float *) ortho);
-
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( _g_buffer_SRV[0] );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( _g_buffer_SRV[2] );
@@ -364,9 +377,7 @@ void DeferredApp::render_to_quad()
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
 	_effect->GetVariableByName("FinalImage")->AsShaderResource()->SetResource( NULL );
     for( UINT p = 0; p < techDesc.Passes; ++p )
-    {
         pRenderTechnique->GetPassByIndex( p )->Apply( 0 );
-    }
 }
 
 void DeferredApp::lighting_stage()
@@ -402,12 +413,6 @@ void DeferredApp::lighting_stage()
 	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource( _g_buffer_SRV[3] );
 	
 	_scene.draw_lights(_device);
-
-	// Un-set this resource, as it's associated with an OM output
-	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( NULL );
-    _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( NULL );
-	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
-	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource(NULL);
 }
 
 void DeferredApp::geometry_stage()

@@ -23,6 +23,8 @@ bool CALLBACK IsD3D10DeviceAcceptable( UINT Adapter, UINT Output, D3D10_DRIVER_T
 //--------------------------------------------------------------------------------------
 bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* pUserContext )
 {
+	// Disable VSync
+	pDeviceSettings->d3d10.SyncInterval = 0;
     return true;
 }
 
@@ -121,6 +123,14 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 		case 53: case 101:
 			DeferredApp::instance()->set_render_state(DeferredApp::FINAL);
 			_cprintf("Setting render state to FINAL_COMPOSIT.\n");
+			break;
+		case 66:
+			DeferredApp::instance()->forward_rendering();
+			_cprintf("Using forward rendering.\n");
+			break;
+		case 78:
+			DeferredApp::instance()->deferred_rendering();
+			_cprintf("Using deferred rendering.\n");
 			break;
 		default:
 			_cprintf("Pressed key: %i\n", nChar);

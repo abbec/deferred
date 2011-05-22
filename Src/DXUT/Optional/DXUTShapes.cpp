@@ -625,15 +625,15 @@ static void MakeSphere( VERTEX* pVertices, WORD* pwIndices, float fRadius, UINT 
 
     for( i = 0; i < uSlices - 1; i++ )
     {
-        pwFace[0] = ( WORD )( uRowA );
+        pwFace[2] = ( WORD )( uRowA );
         pwFace[1] = ( WORD )( uRowB + i + 1 );
-        pwFace[2] = ( WORD )( uRowB + i );
+        pwFace[0] = ( WORD )( uRowB + i );
         pwFace += 3;
     }
 
-    pwFace[0] = ( WORD )( uRowA );
+    pwFace[2] = ( WORD )( uRowA );
     pwFace[1] = ( WORD )( uRowB );
-    pwFace[2] = ( WORD )( uRowB + i );
+    pwFace[0] = ( WORD )( uRowB + i );
     pwFace += 3;
 
     // Interior stacks
@@ -644,25 +644,25 @@ static void MakeSphere( VERTEX* pVertices, WORD* pwIndices, float fRadius, UINT 
 
         for( i = 0; i < uSlices - 1; i++ )
         {
-            pwFace[0] = ( WORD )( uRowA + i );
+            pwFace[2] = ( WORD )( uRowA + i );
             pwFace[1] = ( WORD )( uRowA + i + 1 );
-            pwFace[2] = ( WORD )( uRowB + i );
+            pwFace[0] = ( WORD )( uRowB + i );
             pwFace += 3;
 
-            pwFace[0] = ( WORD )( uRowA + i + 1 );
+            pwFace[2] = ( WORD )( uRowA + i + 1 );
             pwFace[1] = ( WORD )( uRowB + i + 1 );
-            pwFace[2] = ( WORD )( uRowB + i );
+            pwFace[0] = ( WORD )( uRowB + i );
             pwFace += 3;
         }
 
-        pwFace[0] = ( WORD )( uRowA + i );
+        pwFace[2] = ( WORD )( uRowA + i );
         pwFace[1] = ( WORD )( uRowA );
-        pwFace[2] = ( WORD )( uRowB + i );
+        pwFace[0] = ( WORD )( uRowB + i );
         pwFace += 3;
 
-        pwFace[0] = ( WORD )( uRowA );
+        pwFace[2] = ( WORD )( uRowA );
         pwFace[1] = ( WORD )( uRowB );
-        pwFace[2] = ( WORD )( uRowB + i );
+        pwFace[0] = ( WORD )( uRowB + i );
         pwFace += 3;
     }
 
@@ -672,15 +672,15 @@ static void MakeSphere( VERTEX* pVertices, WORD* pwIndices, float fRadius, UINT 
 
     for( i = 0; i < uSlices - 1; i++ )
     {
-        pwFace[0] = ( WORD )( uRowA + i );
+        pwFace[2] = ( WORD )( uRowA + i );
         pwFace[1] = ( WORD )( uRowA + i + 1 );
-        pwFace[2] = ( WORD )( uRowB );
+        pwFace[0] = ( WORD )( uRowB );
         pwFace += 3;
     }
 
-    pwFace[0] = ( WORD )( uRowA + i );
+    pwFace[2] = ( WORD )( uRowA + i );
     pwFace[1] = ( WORD )( uRowA );
-    pwFace[2] = ( WORD )( uRowB );
+    pwFace[0] = ( WORD )( uRowB );
     pwFace += 3;
 }
 

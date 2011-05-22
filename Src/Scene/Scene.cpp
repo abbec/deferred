@@ -7,7 +7,7 @@
 #include "..\Util\BoundingFrustum.h"
 
 Scene::Scene() :
-_worldVariable(NULL), _effect(NULL),
+_worldVariable(NULL), _effect(NULL),sphere(NULL),
 _viewVariable(NULL), _projectionVariable(NULL), _ambient_color(0.1, 0.1, 0.1)
 {
 	
@@ -34,6 +34,8 @@ Scene::~Scene()
 
 		++it2;
 	}
+
+	SAFE_RELEASE(sphere);
 }
 
 HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
@@ -56,28 +58,30 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 
 	// Objects
 	Deferred::Object *obj = new Deferred::Object();
-	if (!obj->read_from_obj(device, "Media\\monkey.obj"))
-		_cprintf("Error in initializing OBJ object! \n");
+	//if (!obj->read_from_obj(device, "Media\\monkey.obj"))
+		//_cprintf("Error in initializing OBJ object! \n");
 
 	D3DXMATRIX translate;
 	D3DXMatrixTranslation(&translate, -10.5f, 0.0f, 0.0f);
 	//obj->set_transform(translate);
 
-	_objects.push_back(obj);
+	//_objects.push_back(obj);
 
 	// Viking
 	//obj = new Deferred::Object();
-	//if (!obj->read_from_obj(device, "Media\\viking.obj"))
-		//_cprintf("Error in initializing OBJ object! \n");
+	if (!obj->read_from_obj(device, "Media\\viking.obj"))
+		_cprintf("Error in initializing OBJ object! \n");
 
-	//_objects.push_back(obj);
+	_objects.push_back(obj);
 
 	// Set up lighting
 	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
-		D3DXVECTOR3(2.0, 1.0, 2.0), (D3DXVECTOR3(2.0, 1.0, 2.0) - D3DXVECTOR3(0.0, 0.0, 0.0))));
+		D3DXVECTOR3(5.0, 0.0, 0.0), D3DXVECTOR3(0.0, 0.0, 0.0) - D3DXVECTOR3(5.0, 0.0, 0.0)));
 
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
+
+	DXUTCreateSphere(device, 1.0, 100, 100, &sphere);
 
 	// Set up a ModelView Camera
 	D3DXVECTOR3 Eye( 0.0f, 0.0f, 2.0f );
@@ -89,6 +93,9 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	effect->GetVariableByName("Ambient")->AsVector()->SetFloatVector((float *) _ambient_color);
 
 	_camera.SetEnablePositionMovement(true);
+	_camera.SetButtonMasks( MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_MIDDLE_BUTTON );
+
+	sphere->CommitToDevice();
 
 	return S_OK;
 }
@@ -112,8 +119,10 @@ LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 {
     // Update variables
-	_world = *_camera.GetWorldMatrix();
-	D3DXMatrixMultiply(&_world, &_world, translation);
+	//D3DXMatrixIdentity(&_world);
+	//_world = *_camera.GetWorldMatrix();
+	//D3DXMatrixMultiply(&_world, &_world, translation);
+	
 	_view = *_camera.GetViewMatrix();
 	_projection = *_camera.GetProjMatrix();
 
@@ -144,7 +153,7 @@ void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 	D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 	_wv_inverse->SetMatrix((float *)&_world_view_inv);
 	_spec_intensity_var->SetFloat(0.8);
-
+	_effect->GetVariableByName("SpecularRoughness")->AsScalar()->SetFloat(758.8);
 	delete[] corners;
 }
 
@@ -153,17 +162,19 @@ void Scene::bump_light_variables(Deferred::Light *l)
 	if (l->get_type() == Deferred::Light::DIRECTIONAL)
 	{
 		Deferred::DirectionalLight *dl = (Deferred::DirectionalLight *) l;
-		_effect->GetVariableByName("LightDirection")->AsVector()->SetFloatVector((float*) dl->get_direction());
+		_effect->GetVariableByName("LightDir")->AsVector()->SetFloatVector((float*) dl->get_direction());
 	}
 
 	// Transform light position to view space
 	D3DXMATRIX world_view;
+	//D3DXMatrixIdentity(&_world); // Do not rotate lights
 	world_view = _world * _view;
 	D3DXVECTOR4 temp;
-	D3DXVec3Transform(&temp, &l->get_position(), &world_view);
+	D3DXVECTOR3 lpos((float *) l->get_position());
+	D3DXVec3Transform(&temp, &lpos, &world_view);
 	D3DXVECTOR3 light_pos_vs(temp.x, temp.y, temp.z);
 
-	_effect->GetVariableByName("LightPosition")->AsVector()->SetFloatVector((float *) l->get_position());
+	_effect->GetVariableByName("LightPosition")->AsVector()->SetFloatVector((float *) light_pos_vs);
 	_effect->GetVariableByName("LightColor")->AsVector()->SetFloatVector((float *) l->get_color());
 }
 
@@ -184,6 +195,8 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 		// Apply the shader and draw geometry
 		pass->Apply(0);
 		o->render();
+		//sphere->DrawSubset(0);
+		_texture_SR->SetResource(0);
 		++it;
 	}
 
@@ -192,8 +205,8 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 
 void Scene::draw_lights(ID3D10Device *device)
 {
-	FLOAT OriginalBlendFactor[4];   
-    UINT OriginalSampleMask = 0; 
+	FLOAT OriginalBlendFactor[4];
+    UINT OriginalSampleMask = 0;
     ID3D10BlendState* pOriginalBlendState10=NULL;
 
 	ID3D10DepthStencilView *dsv;
@@ -229,7 +242,7 @@ void Scene::draw_lights(ID3D10Device *device)
 
 
 		tech->GetDesc( &techDesc );
-
+		bump_light_variables(light);
 		for( UINT p = 0; p < techDesc.Passes; ++p )
 		{
 			tech->GetPassByIndex(p)->Apply(0);
@@ -238,6 +251,15 @@ void Scene::draw_lights(ID3D10Device *device)
 
 		++it;
 	}
+
+	// Un-set this resource, as it's associated with an OM output
+	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( NULL );
+    _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( NULL );
+	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
+	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource(NULL);
+
+	for( UINT p = 0; p < techDesc.Passes; ++p )
+        tech->GetPassByIndex( p )->Apply( 0 );
 
 	// Restore the previous blend state   
 	device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask);
