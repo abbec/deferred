@@ -32,6 +32,8 @@ public:
 	void render_to_quad();
 
 	void set_render_state(UINT state) { _render_state = state; }
+	void forward_rendering() { _deferred = false; }
+	void deferred_rendering() { _deferred = true; }
 
 	LRESULT handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -55,6 +57,7 @@ private:
 
 	Scene _scene;
 	UINT _render_state;
+	bool _deferred;
 	ID3D10RenderTargetView *_backbuffer;
 	ID3D10DepthStencilView *_depth_stencil;
 

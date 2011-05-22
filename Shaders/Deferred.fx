@@ -12,7 +12,7 @@ cbuffer everyFrame
 {
 	matrix World;
 	matrix View;
-	matrix WorldViewInverse;
+	float3x3 WorldViewInverse;
 	matrix Projection;
 	float SpecularIntensity;
 	float SpecularRoughness;
@@ -43,8 +43,8 @@ Texture2D FinalImage;
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
-	float4 VS_Pos : POSITION0;
-    float4 Normal : NORMAL;
+	float4 VS_Pos : POSITION;
+    float3 Normal : NORMAL;
 	float2 TexCoord : TEXCOORD;
 };
 
@@ -106,8 +106,7 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 	output.Pos = mul(output.Pos, Projection);
 
 	// View space normal
-	output.Normal = float4(input.Normal, 1.0);
-	output.Normal = normalize(mul(output.Normal, WorldViewInverse));
+	output.Normal = normalize(mul(input.Normal, WorldViewInverse));
     
 	// Pass texture coordinates on
 	output.TexCoord = input.TexCoord;
@@ -119,18 +118,44 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 // G Buffer Pixel Shader
 //--------------------------------------------------------------------------------------
-PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input ) //: SV_Target
+PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input )
 {
 	PS_MRT_OUTPUT output;
 
 	// Render to g_buffer
-	output.normal = float4(normalize(input.Normal).xyz, 1.0);
+	output.normal = float4(normalize(input.Normal), 1.0);
 	float depth = -input.VS_Pos.z/FarClipDistance;
 	output.depth = float4(depth, depth, depth, 1.0);
 	output.albedo = float4(AlbedoTexture.Sample( samLinear, input.TexCoord ).rgb, 1.0);
 	output.specularInfo = float4(SpecularIntensity, SpecularRoughness, 1.0, 1.0);
 
 	return output;
+}
+
+float3 GBufferToScreenPS(VS_OUTPUT input) : SV_TARGET
+{
+	// Get the normal
+	float3 normal = normalize(input.Normal);
+
+	// Texture color
+	float3 color = float3(1.0, 0.1, 0.0);
+
+	// Reconstruct position
+	float4 position = input.VS_Pos;
+
+	float3 lightDir = normalize(float3(2.0, 0.0, 0.0)-position.xyz);
+
+	// Create half vector
+	float3 viewDir = -normalize(position.xyz);
+	float3 H = normalize(viewDir + lightDir);
+
+	float HdotN = saturate(dot(normal.xyz, H));
+
+	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), 500);
+	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
+
+	
+	return spec+diff;
 }
 
 VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
@@ -147,7 +172,7 @@ VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOOR
 
 float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
-	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy);
+	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
 	return Ambient * float4(color, 1.0);
 	//return float4(Input.Position.xyz, 1.0);
 }
@@ -167,29 +192,29 @@ VS_SCREENOUTPUT DirectionalLightVS(float4 pos : POSITION, float3 texCoords : TEX
 float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	// Get the normal
-	float4 normal = float4(Normals.Sample(samLinear, Input.TexCoords.xy).xyz, 1.0);
+	float4 screenPosition = Input.Position;
+	float4 normal = float4(Normals.Sample(samLinear, Input.TexCoords.xy).rgb, 1.0);
 
 	// Texture color
-	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy);
-	float3 specInfo = SpecularInfo.Sample(samLinear, Input.TexCoords.xy);
+	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
+	float3 specInfo = SpecularInfo.Sample(samLinear, Input.TexCoords.xy).xyz;
 
 	// Reconstruct position
 	float depth = Depth.Load(float3(Input.Position.xy, 0)).r;
-	float4 position = float4(depth * Input.FrustumCorner, 0.0);
+	float4 position = float4(depth * Input.FrustumCorner, 1.0);
 
-	float3 lightDir = LightPosition - position.xyz;
+	float3 lightDir = normalize(float3(2.0, 0.0, 0.0)-position.xyz);
 
 	// Create half vector
-	float3 viewDir = -normalize(position.xyz/position.w);
+	float3 viewDir = -normalize(position.xyz);
 	float3 H = normalize(viewDir + lightDir);
 
-	float HdotN = max(dot(H, normal), 0.0);
+	float HdotN = saturate(dot(normal.xyz, H));
 
-	float3 specular = color * pow(HdotN, specInfo.g);
-	float3 diffuse = color * max(0.0f, dot(normal, lightDir));
+	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.g);
+	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
-	//return float4(specular + diffuse, 1.0);
-	return position;
+	return float4(spec+diff, 1.0);
 }
 
 //--------------------------------------------------------------------------------------
@@ -310,5 +335,16 @@ technique10 RenderAlbedoToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenAlbedoPS() ) );
+    }
+}
+
+
+technique10 GBufferToScreen
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferToScreenPS() ) );
     }
 }

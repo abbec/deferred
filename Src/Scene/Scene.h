@@ -46,6 +46,8 @@ private:
 
 	CModelViewerCamera _camera;
 
+	ID3DX10Mesh *sphere;
+
 	D3DXVECTOR3 _ambient_color;
 	
 	void bump_shader_variables(const D3DXMATRIX *translation);
