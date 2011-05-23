@@ -93,7 +93,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	effect->GetVariableByName("Ambient")->AsVector()->SetFloatVector((float *) _ambient_color);
 
 	_camera.SetEnablePositionMovement(true);
-	_camera.SetButtonMasks( MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_MIDDLE_BUTTON );
+	_camera.SetButtonMasks( MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_RIGHT_BUTTON );
 
 	sphere->CommitToDevice();
 
@@ -119,9 +119,9 @@ LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 {
     // Update variables
-	//D3DXMatrixIdentity(&_world);
-	//_world = *_camera.GetWorldMatrix();
-	//D3DXMatrixMultiply(&_world, &_world, translation);
+	D3DXMatrixIdentity(&_world);
+	_world = *_camera.GetWorldMatrix();
+	D3DXMatrixMultiply(&_world, &_world, translation);
 	
 	_view = *_camera.GetViewMatrix();
 	_projection = *_camera.GetProjMatrix();
@@ -167,11 +167,11 @@ void Scene::bump_light_variables(Deferred::Light *l)
 
 	// Transform light position to view space
 	D3DXMATRIX world_view;
-	//D3DXMatrixIdentity(&_world); // Do not rotate lights
+	D3DXMatrixIdentity(&_world); // Do not rotate lights
 	world_view = _world * _view;
 	D3DXVECTOR4 temp;
 	D3DXVECTOR3 lpos((float *) l->get_position());
-	D3DXVec3Transform(&temp, &lpos, &world_view);
+	D3DXVec3Transform(&temp, &lpos, &_view);
 	D3DXVECTOR3 light_pos_vs(temp.x, temp.y, temp.z);
 
 	_effect->GetVariableByName("LightPosition")->AsVector()->SetFloatVector((float *) light_pos_vs);
@@ -238,8 +238,7 @@ void Scene::draw_lights(ID3D10Device *device)
 		if (light->get_type() == Deferred::Light::DIRECTIONAL)
 			tech = _effect->GetTechniqueByName("DirectionalLight");
 		else if (light->get_type() == Deferred::Light::POINT)
-			;
-
+		{}
 
 		tech->GetDesc( &techDesc );
 		bump_light_variables(light);
