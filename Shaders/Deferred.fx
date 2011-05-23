@@ -23,7 +23,6 @@ cbuffer everyFrame
 }
 
 //--------------------------------------------------------------------------------------
-
 Texture2D AlbedoTexture;
 
 // Far clipping plane corners.
@@ -35,7 +34,6 @@ float3 FarPlaneCorners[4];
 Texture2D Normals;
 Texture2D Depth;
 Texture2D Albedo;
-Texture2D SpecularInfo;
 // -------------- //
 
 Texture2D FinalImage;
@@ -60,7 +58,6 @@ struct PS_MRT_OUTPUT
 	float4 normal : SV_TARGET0;
 	float4 depth : SV_TARGET1;
 	float4 albedo : SV_TARGET2;
-	float4 specularInfo : SV_TARGET3;
 };
 
 struct VS_SCREENOUTPUT
@@ -85,10 +82,27 @@ BlendState SrcColorBlendingAdd
     SrcBlend = SRC_COLOR;
     DestBlend = ONE;
     BlendOp = ADD;
+    SrcBlendAlpha = ONE;
+    DestBlendAlpha = ONE;
+    BlendOpAlpha = ADD;
+    RenderTargetWriteMask[0] = 0x0F;
+};
+
+BlendState SrcAlphaBlendingAdd
+{
+    BlendEnable[0] = TRUE;
+    SrcBlend = SRC_ALPHA;
+    DestBlend = INV_SRC_ALPHA;
+    BlendOp = ADD;
     SrcBlendAlpha = ZERO;
     DestBlendAlpha = ZERO;
     BlendOpAlpha = ADD;
     RenderTargetWriteMask[0] = 0x0F;
+};
+
+BlendState NoBlending
+{
+    BlendEnable[0] = FALSE;
 };
 
 //--------------------------------------------------------------------------------------
@@ -125,9 +139,8 @@ PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input )
 	// Render to g_buffer
 	output.normal = float4(normalize(input.Normal), 1.0);
 	float depth = -input.VS_Pos.z/FarClipDistance;
-	output.depth = float4(depth, depth, depth, 1.0);
+	output.depth = float4(depth, SpecularIntensity, SpecularRoughness, 1.0);
 	output.albedo = float4(AlbedoTexture.Sample( samLinear, input.TexCoord ).rgb, 1.0);
-	output.specularInfo = float4(SpecularIntensity, SpecularRoughness, 1.0, 1.0);
 
 	return output;
 }
@@ -158,10 +171,17 @@ float3 GBufferToScreenPS(VS_OUTPUT input) : SV_TARGET
 	return spec+diff;
 }
 
+float4 SkyBoxPS(VS_OUTPUT input) : SV_TARGET
+{
+	// Texture color
+	float4 color = float4(AlbedoTexture.Sample(samLinear, input.TexCoord).rgb, 1.0);
+
+	return color;
+}
+
 VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
 {
 	VS_SCREENOUTPUT Output;
-    //Output.Position = mul(Ortho, pos);
 	Output.Position = pos;
 
 	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
@@ -174,7 +194,6 @@ float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
 	return Ambient * float4(color, 1.0);
-	//return float4(Input.Position.xyz, 1.0);
 }
 
 // Directional lights
@@ -193,11 +212,11 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	// Get the normal
 	float4 screenPosition = Input.Position;
-	float4 normal = float4(Normals.Sample(samLinear, Input.TexCoords.xy).rgb, 1.0);
+	float4 normal = Normals.Sample(samLinear, Input.TexCoords.xy);
 
 	// Texture color
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
-	float3 specInfo = SpecularInfo.Sample(samLinear, Input.TexCoords.xy).xyz;
+	float2 specInfo = Depth.Sample(samLinear, Input.TexCoords.xy).yz;
 
 	// Reconstruct position
 	float depth = Depth.Load(float3(Input.Position.xy, 0)).r;
@@ -211,10 +230,10 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 
 	float HdotN = saturate(dot(normal.xyz, H));
 
-	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.g);
+	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y);
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
-	return float4((spec+diff)*LightColor, 1.0);
+	return float4((diff+spec)*LightColor.xyz, normal.a);
 }
 
 // Point lights
@@ -233,11 +252,11 @@ float4 PointLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	// Get the normal
 	float4 screenPosition = Input.Position;
-	float4 normal = float4(Normals.Sample(samLinear, Input.TexCoords.xy).rgb, 1.0);
+	float4 normal = float4(Normals.Sample(samLinear, Input.TexCoords.xy));
 
 	// Texture color
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
-	float3 specInfo = SpecularInfo.Sample(samLinear, Input.TexCoords.xy).xyz;
+	float2 specInfo = Depth.Sample(samLinear, Input.TexCoords.xy).yz;
 
 	// Reconstruct position
 	float depth = Depth.Load(float3(Input.Position.xy, 0)).r;
@@ -251,10 +270,10 @@ float4 PointLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 
 	float HdotN = saturate(dot(normal.xyz, H));
 
-	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.g);
+	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y);
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
-	return float4((spec+diff)*LightColor, 1.0);
+	return float4((diff+spec)*LightColor.xyz, normal.a);
 }
 
 //--------------------------------------------------------------------------------------
@@ -282,15 +301,16 @@ float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 float4 ScreenNormalsPS(VS_SCREENOUTPUT Input) : SV_Target
 {
 	float4 pos = Input.Position;
+	float alpha = Normals.Load(float3(pos.xy, 0)).a;
 
-	return Normals.Load(float3(pos.xy, 0));
+	return float4(alpha, alpha, alpha, 1.0);
 }
 
 float4 ScreenDepthPS(VS_SCREENOUTPUT Input) : SV_Target
 {
 	float4 pos = Input.Position;
 
-	return Depth.Load(float3(pos.xy, 0));
+	return Depth.Load(float3(pos.xy, 0)).x;
 }
 
 float4 ScreenAlbedoPS(VS_SCREENOUTPUT Input) : SV_Target
@@ -310,6 +330,7 @@ technique10 GeometryStage
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS() ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
     }
 }
 
@@ -322,7 +343,7 @@ technique10 AmbientLight
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, AmbientLightPS() ) );
 
-		SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
     }
 }
 
@@ -354,9 +375,12 @@ technique10 RenderToQuad // Final compositing
 {
     pass P0
     {
+
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenPS() ) );
+
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
     }
 }
 
@@ -398,5 +422,15 @@ technique10 GBufferToScreen
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferToScreenPS() ) );
+    }
+}
+
+technique10 SkyBox
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, SkyBoxPS() ) );
     }
 }

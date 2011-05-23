@@ -73,6 +73,7 @@ void CALLBACK OnD3D10FrameRender( ID3D10Device* pd3dDevice, double fTime, float 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D10ReleasingSwapChain( void* pUserContext )
 {
+	DeferredApp::instance()->clean_buffers();
 }
 
 

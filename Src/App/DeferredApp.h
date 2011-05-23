@@ -17,13 +17,14 @@ public:
 
 	// Rendering states
 	const enum states {NORMALS = 1, DEPTH = 2, ALBEDO = 3, FINAL = 5};
-	const enum {GBUFFER_SIZE = 4};
+	const enum {GBUFFER_SIZE = 3};
 	const enum {PBUFFER_SIZE = 2};
 
 	~DeferredApp();
 
 	HRESULT initScene(ID3D10Device* device);
 	HRESULT initBuffers(ID3D10Device* device, const DXGI_SURFACE_DESC*);
+	void clean_buffers();
 	void render(ID3D10Device* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext);
 
 	inline Scene *getScene() { return &_scene; }
@@ -60,6 +61,8 @@ private:
 	bool _deferred;
 	ID3D10RenderTargetView *_backbuffer;
 	ID3D10DepthStencilView *_depth_stencil;
+
+	ID3D10RasterizerState *_rs_state, *_rs_default_state;
 
 
 	// G-buffer

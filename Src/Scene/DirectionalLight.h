@@ -14,6 +14,7 @@ namespace Deferred
 		  ~DirectionalLight(){}
 
 		  D3DXVECTOR3 get_direction() { return _direction; }
+		  UINT get_type() { return Light::DIRECTIONAL; }
 
 	private:
 		D3DXVECTOR3 _direction;
