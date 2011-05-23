@@ -75,8 +75,15 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	_objects.push_back(obj);
 
 	// Set up lighting
-	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
-		D3DXVECTOR3(5.0, 0.0, 0.0), D3DXVECTOR3(0.0, 0.0, 0.0) - D3DXVECTOR3(5.0, 0.0, 0.0)));
+	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(0.5, 0.5, 0.5, 1.0), 
+		D3DXVECTOR3(1.0, 1.0, 5.0), D3DXVECTOR3(0.0, 0.0, 0.0) - D3DXVECTOR3(1.0, 1.0, 5.0)));
+
+	_lights.push_back(new Deferred::PointLight(D3DXVECTOR4(1.0, 0.0, 0.0, 1.0), 
+		D3DXVECTOR3(-5.0, 0.0, 0.0)));
+
+	_lights.push_back(new Deferred::PointLight(D3DXVECTOR4(0.0, 1.0, 0.0, 1.0), 
+		D3DXVECTOR3(5.0, 0.0, 0.0)));
+
 
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
@@ -159,12 +166,6 @@ void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 
 void Scene::bump_light_variables(Deferred::Light *l)
 {
-	if (l->get_type() == Deferred::Light::DIRECTIONAL)
-	{
-		Deferred::DirectionalLight *dl = (Deferred::DirectionalLight *) l;
-		_effect->GetVariableByName("LightDir")->AsVector()->SetFloatVector((float*) dl->get_direction());
-	}
-
 	// Transform light position to view space
 	D3DXMATRIX world_view;
 	D3DXMatrixIdentity(&_world); // Do not rotate lights
@@ -173,6 +174,17 @@ void Scene::bump_light_variables(Deferred::Light *l)
 	D3DXVECTOR3 lpos((float *) l->get_position());
 	D3DXVec3Transform(&temp, &lpos, &_view);
 	D3DXVECTOR3 light_pos_vs(temp.x, temp.y, temp.z);
+
+	if (l->get_type() == Deferred::Light::DIRECTIONAL)
+	{
+
+		Deferred::DirectionalLight *dl = (Deferred::DirectionalLight *) l;
+
+		D3DXVECTOR3 ldir((float *) dl->get_direction());
+		D3DXVec3Transform(&temp, &ldir, &_view);
+		D3DXVECTOR3 light_dir_vs(temp.x, temp.y, temp.z);
+		_effect->GetVariableByName("LightDir")->AsVector()->SetFloatVector((float*) light_dir_vs);
+	}
 
 	_effect->GetVariableByName("LightPosition")->AsVector()->SetFloatVector((float *) light_pos_vs);
 	_effect->GetVariableByName("LightColor")->AsVector()->SetFloatVector((float *) l->get_color());
@@ -234,11 +246,13 @@ void Scene::draw_lights(ID3D10Device *device)
 
 	while (it != _lights.end())
 	{
+		device->ClearDepthStencilView(dsv, D3D10_CLEAR_DEPTH, 1.0, 0);
+
 		Deferred::Light *light = *it;
 		if (light->get_type() == Deferred::Light::DIRECTIONAL)
 			tech = _effect->GetTechniqueByName("DirectionalLight");
 		else if (light->get_type() == Deferred::Light::POINT)
-		{}
+			tech = _effect->GetTechniqueByName("PointLight");
 
 		tech->GetDesc( &techDesc );
 		bump_light_variables(light);

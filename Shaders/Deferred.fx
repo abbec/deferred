@@ -203,6 +203,46 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	float depth = Depth.Load(float3(Input.Position.xy, 0)).r;
 	float4 position = float4(depth * Input.FrustumCorner, 1.0);
 
+	float3 lightDir = normalize(-LightDir);
+
+	// Create half vector
+	float3 viewDir = -normalize(position.xyz);
+	float3 H = normalize(viewDir + lightDir);
+
+	float HdotN = saturate(dot(normal.xyz, H));
+
+	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.g);
+	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
+
+	return float4((spec+diff)*LightColor, 1.0);
+}
+
+// Point lights
+VS_SCREENOUTPUT PointLightVS(float4 pos : POSITION, float3 texCoords : TEXCOORD0)
+{
+	VS_SCREENOUTPUT Output;
+	Output.Position = pos;
+
+	Output.FrustumCorner = FarPlaneCorners[texCoords.z];
+	Output.TexCoords = texCoords.xy;
+
+    return Output;
+}
+
+float4 PointLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
+{
+	// Get the normal
+	float4 screenPosition = Input.Position;
+	float4 normal = float4(Normals.Sample(samLinear, Input.TexCoords.xy).rgb, 1.0);
+
+	// Texture color
+	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
+	float3 specInfo = SpecularInfo.Sample(samLinear, Input.TexCoords.xy).xyz;
+
+	// Reconstruct position
+	float depth = Depth.Load(float3(Input.Position.xy, 0)).r;
+	float4 position = float4(depth * Input.FrustumCorner, 1.0);
+
 	float3 lightDir = normalize(LightPosition-position.xyz);
 
 	// Create half vector
@@ -214,7 +254,7 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.g);
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
-	return float4(spec+diff, 1.0);
+	return float4((spec+diff)*LightColor, 1.0);
 }
 
 //--------------------------------------------------------------------------------------
@@ -293,6 +333,18 @@ technique10 DirectionalLight
         SetVertexShader( CompileShader( vs_4_0, DirectionalLightVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, DirectionalLightPS() ) );
+		SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+    }
+}
+
+technique10 PointLight
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, PointLightVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, PointLightPS() ) );
+		SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
     }
 }
 
