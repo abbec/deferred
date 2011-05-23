@@ -143,7 +143,7 @@ float3 GBufferToScreenPS(VS_OUTPUT input) : SV_TARGET
 	// Reconstruct position
 	float4 position = input.VS_Pos;
 
-	float3 lightDir = normalize(float3(2.0, 0.0, 0.0)-position.xyz);
+	float3 lightDir = normalize(LightPosition-position.xyz);
 
 	// Create half vector
 	float3 viewDir = -normalize(position.xyz);
@@ -203,7 +203,7 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	float depth = Depth.Load(float3(Input.Position.xy, 0)).r;
 	float4 position = float4(depth * Input.FrustumCorner, 1.0);
 
-	float3 lightDir = normalize(float3(2.0, 0.0, 0.0)-position.xyz);
+	float3 lightDir = normalize(LightPosition-position.xyz);
 
 	// Create half vector
 	float3 viewDir = -normalize(position.xyz);
