@@ -7,7 +7,7 @@
 #include "..\Util\BoundingFrustum.h"
 
 Scene::Scene() :
-_worldVariable(NULL), _effect(NULL),sphere(NULL),
+_worldVariable(NULL), _effect(NULL),_skybox(NULL), _skybox_texture_RV(NULL),
 _viewVariable(NULL), _projectionVariable(NULL), _ambient_color(0.1, 0.1, 0.1)
 {
 	
@@ -35,7 +35,8 @@ Scene::~Scene()
 		++it2;
 	}
 
-	SAFE_RELEASE(sphere);
+	SAFE_RELEASE(_skybox);
+	SAFE_RELEASE(_skybox_texture_RV);
 }
 
 HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
@@ -58,21 +59,24 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 
 	// Objects
 	Deferred::Object *obj = new Deferred::Object();
-	//if (!obj->read_from_obj(device, "Media\\monkey.obj"))
-		//_cprintf("Error in initializing OBJ object! \n");
+	if (!obj->read_from_obj(device, "Media\\viking.obj"))
+		_cprintf("Error in initializing OBJ object! \n");
 
 	D3DXMATRIX translate;
 	D3DXMatrixTranslation(&translate, -10.5f, 0.0f, 0.0f);
 	//obj->set_transform(translate);
 
-	//_objects.push_back(obj);
+	_objects.push_back(obj);
 
 	// Viking
 	//obj = new Deferred::Object();
-	if (!obj->read_from_obj(device, "Media\\viking.obj"))
-		_cprintf("Error in initializing OBJ object! \n");
+	//if (!obj->read_from_obj(device, "Media\\monkey.obj"))
+	//{
+		//_cprintf("Error in initializing OBJ object! \n");
+		//return E_FAIL;
+	//}
 
-	_objects.push_back(obj);
+	//_objects.push_back(obj);
 
 	// Set up lighting
 	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(0.5, 0.5, 0.5, 1.0), 
@@ -88,7 +92,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
 
-	DXUTCreateSphere(device, 1.0, 100, 100, &sphere);
+	DXUTCreateSphere(device, 10.0, 100, 100, &_skybox);
 
 	// Set up a ModelView Camera
 	D3DXVECTOR3 Eye( 0.0f, 0.0f, 2.0f );
@@ -102,7 +106,9 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	_camera.SetEnablePositionMovement(true);
 	_camera.SetButtonMasks( MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_RIGHT_BUTTON );
 
-	sphere->CommitToDevice();
+
+	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(device, L"Media\\Textures\\sky.jpg", NULL, NULL, &_skybox_texture_RV, NULL )))
+		  _cprintf("Could not load texture!\n");
 
 	return S_OK;
 }
@@ -110,6 +116,19 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 void Scene::update(double fTime, float fElapsedTime, void* pUserContext)
 {
 	_camera.FrameMove(fElapsedTime);
+
+	// Update variables
+	D3DXMatrixIdentity(&_world);
+	_world = *_camera.GetWorldMatrix();
+	_view = *_camera.GetViewMatrix();
+	_projection = *_camera.GetProjMatrix();
+
+	D3DXMATRIX world_view;
+	
+	world_view = _world * _view;
+
+	D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
+	D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 }
 
 HRESULT Scene::set_view(const DXGI_SURFACE_DESC *back_buffer_desc)
@@ -125,21 +144,14 @@ LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 {
-    // Update variables
-	D3DXMatrixIdentity(&_world);
-	_world = *_camera.GetWorldMatrix();
 	D3DXMatrixMultiply(&_world, &_world, translation);
-	
-	_view = *_camera.GetViewMatrix();
-	_projection = *_camera.GetProjMatrix();
 
     _worldVariable->SetMatrix( ( float* )&_world );
     _viewVariable->SetMatrix( ( float* )&_view );
     _projectionVariable->SetMatrix( ( float* )&_projection );
 
-	D3DXMATRIX world_view, view_proj;
+	D3DXMATRIX view_proj;
 
-	world_view = _world * _view;
 	view_proj = _view * _projection;
 
 	Deferred::BoundingFrustum fr(view_proj);
@@ -156,8 +168,6 @@ void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 
 	_far_plane_corners_variable->SetFloatVectorArray((float*) corners, 0, 4);
 
-	D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
-	D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 	_wv_inverse->SetMatrix((float *)&_world_view_inv);
 	_spec_intensity_var->SetFloat(0.8);
 	_effect->GetVariableByName("SpecularRoughness")->AsScalar()->SetFloat(758.8);
@@ -190,6 +200,36 @@ void Scene::bump_light_variables(Deferred::Light *l)
 	_effect->GetVariableByName("LightColor")->AsVector()->SetFloatVector((float *) l->get_color());
 }
 
+void Scene::render_skybox(ID3D10Device *device)
+{
+	D3DXMATRIX i;
+	D3DXMatrixIdentity(&i);
+	bump_shader_variables(&i);
+
+	_texture_SR->SetResource(_skybox_texture_RV);
+	ID3D10DepthStencilView *dsv;
+	ID3D10RenderTargetView *rtv;
+	device->OMGetRenderTargets(1, &rtv, &dsv);   
+
+	D3D10_TECHNIQUE_DESC techDesc;
+	
+	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("SkyBox");
+	tech->GetDesc( &techDesc );
+
+    for( UINT p = 0; p < techDesc.Passes; ++p )
+    {
+		tech->GetPassByIndex(p)->Apply(0);
+		_skybox->DrawSubset(0);
+	}
+
+	device->ClearDepthStencilView(dsv, D3D10_CLEAR_DEPTH, 1.0, 0);
+
+	_texture_SR->SetResource(0);
+
+	SAFE_RELEASE(rtv);
+	SAFE_RELEASE(dsv);
+}
+
 void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 {
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
@@ -207,7 +247,6 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 		// Apply the shader and draw geometry
 		pass->Apply(0);
 		o->render();
-		//sphere->DrawSubset(0);
 		_texture_SR->SetResource(0);
 		++it;
 	}
@@ -223,7 +262,7 @@ void Scene::draw_lights(ID3D10Device *device)
 
 	ID3D10DepthStencilView *dsv;
 	ID3D10RenderTargetView *rtv;
-	device->OMGetRenderTargets(1, &rtv, &dsv);  
+	device->OMGetRenderTargets(1, &rtv, &dsv); 
 
 	// Save the current blend state   
     device->OMGetBlendState(&pOriginalBlendState10, OriginalBlendFactor, &OriginalSampleMask);   
@@ -269,7 +308,6 @@ void Scene::draw_lights(ID3D10Device *device)
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( NULL );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( NULL );
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( NULL );
-	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource(NULL);
 
 	for( UINT p = 0; p < techDesc.Passes; ++p )
         tech->GetPassByIndex( p )->Apply( 0 );

@@ -8,7 +8,7 @@ Hud::Hud(ID3D10Device *device) : _device(device)
 	// Create a font
 	D3DX10CreateFontW( _device, 15, 0, FW_BOLD, 1, FALSE, DEFAULT_CHARSET,
                                 OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
-                                L"Arial", &_font);
+                                L"Consolas", &_font);
 
 	D3DX10CreateSprite(_device, 512, &_sprite);
 
@@ -22,6 +22,9 @@ Hud::~Hud()
 
 void Hud::render()
 {
+	ID3D10DepthStencilState *old_dss;
+	_device->OMGetDepthStencilState(&old_dss, 0);
+
 	FLOAT OriginalBlendFactor[4];   
     UINT OriginalSampleMask = 0;   
     ID3D10BlendState* pFontBlendState10=NULL;
@@ -53,16 +56,23 @@ void Hud::render()
 	rc.left = 0;
 	rc.right = 200;
 	rc.top = 0;
-       
+	RECT rc2; 
+	rc2.bottom = 40;
+	rc2.left = 0;
+	rc2.right = 200;
+	rc2.top = 20;
+
     // Start font drawing   
     _sprite->Begin(0);
     // Draw the text to the screen   
     HRESULT hr = _font->DrawTextW( _sprite, DXUTGetFrameStats(true), -1, &rc, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));   
-
+	hr = _font->DrawTextW( _sprite, DXUTGetDeviceStats(), -1, &rc2, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));
     _sprite->End();
-    // Restore the previous blend state   
+    // Restore the previous blend state and depth test
 	_device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask);
+	_device->OMSetDepthStencilState(old_dss, 0);
 
+	SAFE_RELEASE(old_dss);
 	SAFE_RELEASE(pFontBlendState10);
 	SAFE_RELEASE(pOriginalBlendState10);
 

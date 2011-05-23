@@ -7,6 +7,13 @@
 #include "PointLight.h"
 #include <vector>
 
+struct DXUTVertex
+{
+    D3DXVECTOR3 pos;
+    D3DXVECTOR3 norm;
+};
+
+
 class Scene
 {
 public:
@@ -16,6 +23,7 @@ public:
 	HRESULT init(ID3D10Device *device, ID3D10Effect *effect);
 	HRESULT set_view(const DXGI_SURFACE_DESC *back_buffer_desc);
 	void render(ID3D10Device *device, ID3D10EffectPass *pass);
+	void render_skybox(ID3D10Device *device);
 	void draw_lights(ID3D10Device *device);
 	void rotate(D3DXVECTOR3 &at);
 
@@ -46,7 +54,8 @@ private:
 
 	CModelViewerCamera _camera;
 
-	ID3DX10Mesh *sphere;
+	ID3DX10Mesh *_skybox;
+	ID3D10ShaderResourceView *_skybox_texture_RV;
 
 	D3DXVECTOR3 _ambient_color;
 	

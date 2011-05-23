@@ -9,7 +9,8 @@ DeferredApp::DeferredApp() :
 _device(NULL), _time(0.0), 
 _elapsed_time(0.0), _user_context(NULL), _backbuffer(NULL), _depth_stencil(NULL),
 _scene(), _layout(NULL), _effect(NULL), _geometry_stage(NULL),
-_quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL), _hud(NULL), _deferred(false)
+_quad_layout(NULL), _quad_VB(NULL), _render_state(FINAL), _hud(NULL), _deferred(true),
+_rs_state(NULL), _rs_default_state(NULL)
 {
 	for (int i = 0; i < GBUFFER_SIZE; ++i)
 	{
@@ -50,6 +51,8 @@ DeferredApp::~DeferredApp()
 	SAFE_RELEASE(_quad_layout);
 	SAFE_RELEASE(_backbuffer);
 	SAFE_RELEASE(_depth_stencil);
+	SAFE_RELEASE(_rs_state);
+	SAFE_RELEASE(_rs_default_state);
 
 	SAFE_DELETE(_hud);
 
@@ -156,7 +159,7 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
 	return _scene.init(device, _effect);
 }
 
-HRESULT DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *back_buffer_desc)
+void DeferredApp::clean_buffers()
 {
 	// Make sure the old buffers are released (Mostly on resize)
 	for (int i = 0; i < GBUFFER_SIZE; ++i)
@@ -173,6 +176,12 @@ HRESULT DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *
 		SAFE_RELEASE(_p_buffer_SRV[i]);
 	}
 
+	SAFE_RELEASE(_rs_state);
+	SAFE_RELEASE(_rs_default_state);
+}
+
+HRESULT DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *back_buffer_desc)
+{
 	// Set up MRT
 	D3D10_TEXTURE2D_DESC Desc;
     Desc.Width = back_buffer_desc->Width;
@@ -242,7 +251,15 @@ HRESULT DeferredApp::initBuffers(ID3D10Device *device, const DXGI_SURFACE_DESC *
 			return false;
 		}	
 	}
-	
+
+	_device->RSGetState(&_rs_default_state);
+
+	D3D10_RASTERIZER_DESC rs_desc;
+	_rs_default_state->GetDesc(&rs_desc);
+	rs_desc.CullMode = D3D10_CULL_NONE;
+	rs_desc.FillMode = D3D10_FILL_SOLID;
+
+	_device->CreateRasterizerState(&rs_desc, &_rs_state);
 	return _scene.set_view(back_buffer_desc);
 }
 
@@ -265,7 +282,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_elapsed_time = fElapsedTime;
 	_user_context = pUserContext;
 
-    float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	// Get the old render targets
     _device->OMGetRenderTargets( 1, &_backbuffer, &_depth_stencil );
@@ -274,6 +291,11 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_device->ClearRenderTargetView(_backbuffer, ClearColor);
     _device->ClearDepthStencilView(_depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0);
 	
+	_device->RSSetState(_rs_state);
+	_scene.render_skybox(_device);
+	_device->RSSetState(_rs_default_state);
+
+	_device->ClearDepthStencilView(_depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0);
 
 	if (_deferred)
 	{
@@ -314,12 +336,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	}
 
 	// Render text
-	ID3D10DepthStencilState *old_dss;
-	_device->OMGetDepthStencilState(&old_dss, 0);
-	
 	_hud->render();
-	_device->OMSetDepthStencilState(old_dss, 0);
-	SAFE_RELEASE(old_dss);
 	SAFE_RELEASE(_backbuffer);
 	SAFE_RELEASE(_depth_stencil);
 }
@@ -358,7 +375,6 @@ void DeferredApp::render_to_quad()
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( _g_buffer_SRV[0] );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( _g_buffer_SRV[2] );
-
 	_effect->GetVariableByName("FinalImage")->AsShaderResource()->SetResource( _p_buffer_SRV[0] );
 
     //Render
@@ -410,7 +426,6 @@ void DeferredApp::lighting_stage()
 	_effect->GetVariableByName("Normals")->AsShaderResource()->SetResource( _g_buffer_SRV[0] );
     _effect->GetVariableByName("Depth")->AsShaderResource()->SetResource( _g_buffer_SRV[1] );
 	_effect->GetVariableByName("Albedo")->AsShaderResource()->SetResource( _g_buffer_SRV[2] );
-	_effect->GetVariableByName("SpecularInfo")->AsShaderResource()->SetResource( _g_buffer_SRV[3] );
 	
 	_scene.draw_lights(_device);
 }
