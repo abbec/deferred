@@ -22,9 +22,6 @@ Hud::~Hud()
 
 void Hud::render()
 {
-	ID3D10DepthStencilState *old_dss;
-	_device->OMGetDepthStencilState(&old_dss, 0);
-
 	FLOAT OriginalBlendFactor[4];   
     UINT OriginalSampleMask = 0;   
     ID3D10BlendState* pFontBlendState10=NULL;
@@ -45,7 +42,8 @@ void Hud::render()
     // Save the current blend state   
     _device->OMGetBlendState(&pOriginalBlendState10, OriginalBlendFactor, &OriginalSampleMask);   
     // Set the blend state for font drawing   
-    if(pFontBlendState10) {
+    if(pFontBlendState10) 
+	{
         FLOAT NewBlendFactor[4] = {1,0,0,0};   
         _device->OMSetBlendState(pFontBlendState10, NewBlendFactor, 0xf);   
     }   
@@ -70,10 +68,7 @@ void Hud::render()
     _sprite->End();
     // Restore the previous blend state and depth test
 	_device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask);
-	_device->OMSetDepthStencilState(old_dss, 0);
 
-	SAFE_RELEASE(old_dss);
 	SAFE_RELEASE(pFontBlendState10);
 	SAFE_RELEASE(pOriginalBlendState10);
-
 }

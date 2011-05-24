@@ -50,7 +50,6 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
     UINT height = rc.bottom - rc.top;
 
 	_device = device;
-
 	_effect = effect;
 
     // Obtain the variables
@@ -266,16 +265,9 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 
 void Scene::draw_lights(ID3D10Device *device)
 {
-	FLOAT OriginalBlendFactor[4];
-    UINT OriginalSampleMask = 0;
-    ID3D10BlendState* pOriginalBlendState10=NULL;
-
 	ID3D10DepthStencilView *dsv;
 	ID3D10RenderTargetView *rtv;
-	device->OMGetRenderTargets(1, &rtv, &dsv); 
-
-	// Save the current blend state   
-    device->OMGetBlendState(&pOriginalBlendState10, OriginalBlendFactor, &OriginalSampleMask);   
+	device->OMGetRenderTargets(1, &rtv, &dsv);
 
 	D3D10_TECHNIQUE_DESC techDesc;
 	
@@ -288,15 +280,11 @@ void Scene::draw_lights(ID3D10Device *device)
 		device->Draw(4, 0);
 	}
 
-	device->ClearDepthStencilView(dsv, D3D10_CLEAR_DEPTH, 1.0, 0);
-
 	// Go through all the lights in the scene
 	std::vector<Deferred::Light *>::iterator it = _lights.begin();
 
 	while (it != _lights.end())
 	{
-		device->ClearDepthStencilView(dsv, D3D10_CLEAR_DEPTH, 1.0, 0);
-
 		Deferred::Light *light = *it;
 		if (light->get_type() == Deferred::Light::DIRECTIONAL)
 			tech = _effect->GetTechniqueByName("DirectionalLight");
@@ -322,10 +310,6 @@ void Scene::draw_lights(ID3D10Device *device)
 	for( UINT p = 0; p < techDesc.Passes; ++p )
         tech->GetPassByIndex( p )->Apply( 0 );
 
-	// Restore the previous blend state   
-	device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask);
-
-	SAFE_RELEASE(pOriginalBlendState10);
 	SAFE_RELEASE(rtv);
 	SAFE_RELEASE(dsv);
 }

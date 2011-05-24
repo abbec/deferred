@@ -20,7 +20,7 @@ cbuffer everyFrame
 	float3 LightDir;
 	float4 LightColor;
 	float3 LightPosition;
-	bool Lit;
+	bool bLit;
 }
 
 //--------------------------------------------------------------------------------------
@@ -105,6 +105,34 @@ BlendState NoBlending
 {
     BlendEnable[0] = FALSE;
 };
+
+DepthStencilState DepthTest
+{
+	DepthEnable = true;
+	DepthWriteMask = ALL;
+    DepthFunc = Less;
+};
+
+DepthStencilState NoDepthTest
+{
+    DepthEnable = false;
+    DepthWriteMask = ZERO;
+    DepthFunc = Less;
+    
+    // Setup stencil states
+    StencilEnable = false;
+    StencilReadMask = 0xFF;
+    StencilWriteMask = 0x00;
+    
+    FrontFaceStencilFunc = Not_Equal;
+    FrontFaceStencilPass = Keep;
+    FrontFaceStencilFail = Zero;
+    
+    BackFaceStencilFunc = Not_Equal;
+    BackFaceStencilPass = Keep;
+    BackFaceStencilFail = Zero;
+};
+
 
 //--------------------------------------------------------------------------------------
 // G Buffer Vertex Shader
@@ -332,6 +360,7 @@ technique10 GeometryStage
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS() ) );
 		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
     }
 }
 
@@ -345,6 +374,7 @@ technique10 AmbientLight
         SetPixelShader( CompileShader( ps_4_0, AmbientLightPS() ) );
 
 		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -356,6 +386,7 @@ technique10 DirectionalLight
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, DirectionalLightPS() ) );
 		SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -367,6 +398,7 @@ technique10 PointLight
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, PointLightPS() ) );
 		SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -381,7 +413,7 @@ technique10 RenderToQuad // Final compositing
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenPS() ) );
 
-		//SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
