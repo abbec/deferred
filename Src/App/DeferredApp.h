@@ -62,8 +62,6 @@ private:
 	ID3D10RenderTargetView *_backbuffer;
 	ID3D10DepthStencilView *_depth_stencil;
 
-	ID3D10RasterizerState *_rs_state, *_rs_default_state;
-
 
 	// G-buffer
 	ID3D10RenderTargetView *_g_buffer_views[GBUFFER_SIZE];

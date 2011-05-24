@@ -20,6 +20,7 @@ cbuffer everyFrame
 	float3 LightDir;
 	float4 LightColor;
 	float3 LightPosition;
+	bool Lit;
 }
 
 //--------------------------------------------------------------------------------------
@@ -193,7 +194,7 @@ VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOOR
 float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
-	return Ambient * float4(color, 1.0);
+	return 1.0 * float4(color, 1.0);
 }
 
 // Directional lights
@@ -301,9 +302,9 @@ float4 ScreenPS(VS_SCREENOUTPUT Input) : SV_Target
 float4 ScreenNormalsPS(VS_SCREENOUTPUT Input) : SV_Target
 {
 	float4 pos = Input.Position;
-	float alpha = Normals.Load(float3(pos.xy, 0)).a;
+	float4 normal = Normals.Load(float3(pos.xy, 0));
 
-	return float4(alpha, alpha, alpha, 1.0);
+	return normal;
 }
 
 float4 ScreenDepthPS(VS_SCREENOUTPUT Input) : SV_Target
@@ -380,7 +381,7 @@ technique10 RenderToQuad // Final compositing
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenPS() ) );
 
-		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		//SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
     }
 }
 

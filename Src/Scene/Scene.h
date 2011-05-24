@@ -21,7 +21,8 @@ public:
 	~Scene();
 
 	HRESULT init(ID3D10Device *device, ID3D10Effect *effect);
-	HRESULT set_view(const DXGI_SURFACE_DESC *back_buffer_desc);
+	HRESULT on_resize(const DXGI_SURFACE_DESC *back_buffer_desc);
+	void on_resize_release();
 	void render(ID3D10Device *device, ID3D10EffectPass *pass);
 	void render_skybox(ID3D10Device *device);
 	void draw_lights(ID3D10Device *device);
@@ -54,8 +55,12 @@ private:
 
 	CModelViewerCamera _camera;
 
-	ID3DX10Mesh *_skybox;
+	Deferred::Object *_skybox;
 	ID3D10ShaderResourceView *_skybox_texture_RV;
+
+	ID3D10Device *_device;
+
+	ID3D10RasterizerState *_rs_state, *_rs_default_state;
 
 	D3DXVECTOR3 _ambient_color;
 	
