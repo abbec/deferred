@@ -52,19 +52,19 @@ void Hud::render()
        
     // Create and Initialize the destination rectangle   
     RECT rc; 
-	rc.bottom = 20;
+	rc.bottom = 16;
 	rc.left = 0;
 	rc.right = 200;
 	rc.top = 0;
 	RECT rc2; 
-	rc2.bottom = 40;
+	rc2.bottom = 32;
 	rc2.left = 0;
 	rc2.right = 200;
-	rc2.top = 20;
+	rc2.top = 16;
 
     // Start font drawing   
     _sprite->Begin(0);
-    // Draw the text to the screen   
+    // Draw the text to the screen
     HRESULT hr = _font->DrawTextW( _sprite, DXUTGetFrameStats(true), -1, &rc, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));   
 	hr = _font->DrawTextW( _sprite, DXUTGetDeviceStats(), -1, &rc2, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));
     _sprite->End();

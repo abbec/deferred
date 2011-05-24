@@ -8,7 +8,8 @@
 
 Scene::Scene() :
 _worldVariable(NULL), _effect(NULL),_skybox(NULL), _skybox_texture_RV(NULL),
-_viewVariable(NULL), _projectionVariable(NULL), _ambient_color(0.1, 0.1, 0.1)
+_viewVariable(NULL), _projectionVariable(NULL), _ambient_color(0.1, 0.1, 0.1),
+_rs_state(NULL), _rs_default_state(NULL), _device(NULL)
 {
 	
 }
@@ -35,8 +36,10 @@ Scene::~Scene()
 		++it2;
 	}
 
-	SAFE_RELEASE(_skybox);
+	SAFE_DELETE(_skybox);
 	SAFE_RELEASE(_skybox_texture_RV);
+	SAFE_RELEASE(_rs_state);
+	SAFE_RELEASE(_rs_default_state);
 }
 
 HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
@@ -45,6 +48,8 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
     GetClientRect( DXUTGetHWND(), &rc );
     UINT width = rc.right - rc.left;
     UINT height = rc.bottom - rc.top;
+
+	_device = device;
 
 	_effect = effect;
 
@@ -59,24 +64,36 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 
 	// Objects
 	Deferred::Object *obj = new Deferred::Object();
-	if (!obj->read_from_obj(device, "Media\\viking.obj"))
+	if (!obj->read_from_obj(device, "Media\\aspen.obj"))
 		_cprintf("Error in initializing OBJ object! \n");
 
 	D3DXMATRIX translate;
-	D3DXMatrixTranslation(&translate, -10.5f, 0.0f, 0.0f);
-	//obj->set_transform(translate);
+	D3DXMatrixTranslation(&translate, 0.0f, 50.0f, 0.0f);
+
+	//obj->set_transform(&skybox);
 
 	_objects.push_back(obj);
 
 	// Viking
-	//obj = new Deferred::Object();
-	//if (!obj->read_from_obj(device, "Media\\monkey.obj"))
-	//{
-		//_cprintf("Error in initializing OBJ object! \n");
-		//return E_FAIL;
-	//}
+	obj = new Deferred::Object();
+	if (!obj->read_from_obj(device, "Media\\viking.obj"))
+	{
+		_cprintf("Error in initializing OBJ object! \n");
+		return E_FAIL;
+	}
 
-	//_objects.push_back(obj);
+	_objects.push_back(obj);
+
+	D3DXMATRIX skybox;
+	D3DXMatrixScaling(&skybox, 50.0, 50.0, 50.0);
+	skybox = skybox * translate;
+
+	_skybox = new Deferred::Object();
+	_skybox->read_from_obj(_device, "Media\\skysphere.obj");
+	_skybox->set_transform(&skybox);
+
+	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(device, L"Media\\Textures\\sky.jpg", NULL, NULL, &_skybox_texture_RV, NULL )))
+		  _cprintf("Could not load texture!\n");
 
 	// Set up lighting
 	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(0.5, 0.5, 0.5, 1.0), 
@@ -92,8 +109,6 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	// Initialize the world matrix
     D3DXMatrixIdentity( &_world );
 
-	DXUTCreateSphere(device, 10.0, 100, 100, &_skybox);
-
 	// Set up a ModelView Camera
 	D3DXVECTOR3 Eye( 0.0f, 0.0f, 2.0f );
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
@@ -104,11 +119,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	effect->GetVariableByName("Ambient")->AsVector()->SetFloatVector((float *) _ambient_color);
 
 	_camera.SetEnablePositionMovement(true);
-	_camera.SetButtonMasks( MOUSE_LEFT_BUTTON, MOUSE_WHEEL, MOUSE_RIGHT_BUTTON );
-
-
-	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(device, L"Media\\Textures\\sky.jpg", NULL, NULL, &_skybox_texture_RV, NULL )))
-		  _cprintf("Could not load texture!\n");
+	_camera.SetButtonMasks( MOUSE_RIGHT_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
 
 	return S_OK;
 }
@@ -116,25 +127,28 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 void Scene::update(double fTime, float fElapsedTime, void* pUserContext)
 {
 	_camera.FrameMove(fElapsedTime);
-
-	// Update variables
-	D3DXMatrixIdentity(&_world);
-	_world = *_camera.GetWorldMatrix();
-	_view = *_camera.GetViewMatrix();
-	_projection = *_camera.GetProjMatrix();
-
-	D3DXMATRIX world_view;
-	
-	world_view = _world * _view;
-
-	D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
-	D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 }
 
-HRESULT Scene::set_view(const DXGI_SURFACE_DESC *back_buffer_desc)
+HRESULT Scene::on_resize(const DXGI_SURFACE_DESC *back_buffer_desc)
 {
 	_camera.SetWindow(back_buffer_desc->Width, back_buffer_desc->Height);
+
+	_device->RSGetState(&_rs_default_state);
+
+	D3D10_RASTERIZER_DESC rs_desc;
+	_rs_default_state->GetDesc(&rs_desc);
+	rs_desc.CullMode = D3D10_CULL_NONE;
+	rs_desc.FillMode = D3D10_FILL_SOLID;
+
+	_device->CreateRasterizerState(&rs_desc, &_rs_state);
+
 	return S_OK;
+}
+
+void Scene::on_resize_release()
+{
+	SAFE_RELEASE(_rs_state);
+	SAFE_RELEASE(_rs_default_state);
 }
 
 LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -144,7 +158,19 @@ LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 {
+	// Update variables
+	D3DXMatrixIdentity(&_world);
+	//_world = *_camera.GetWorldMatrix();
+	_view = *_camera.GetViewMatrix();
+	_projection = *_camera.GetProjMatrix();
+
+	D3DXMATRIX world_view;
 	D3DXMatrixMultiply(&_world, &_world, translation);
+	
+	world_view = _world * _view;
+
+	D3DXMatrixInverse( &_world_view_inv, NULL, &world_view);
+	D3DXMatrixTranspose(&_world_view_inv, &_world_view_inv);
 
     _worldVariable->SetMatrix( ( float* )&_world );
     _viewVariable->SetMatrix( ( float* )&_view );
@@ -202,36 +228,20 @@ void Scene::bump_light_variables(Deferred::Light *l)
 
 void Scene::render_skybox(ID3D10Device *device)
 {
-	D3DXMATRIX i;
-	D3DXMatrixIdentity(&i);
-	bump_shader_variables(&i);
-
-	_texture_SR->SetResource(_skybox_texture_RV);
-	ID3D10DepthStencilView *dsv;
-	ID3D10RenderTargetView *rtv;
-	device->OMGetRenderTargets(1, &rtv, &dsv);   
-
-	D3D10_TECHNIQUE_DESC techDesc;
-	
-	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("SkyBox");
-	tech->GetDesc( &techDesc );
-
-    for( UINT p = 0; p < techDesc.Passes; ++p )
-    {
-		tech->GetPassByIndex(p)->Apply(0);
-		_skybox->DrawSubset(0);
-	}
-
-	device->ClearDepthStencilView(dsv, D3D10_CLEAR_DEPTH, 1.0, 0);
-
-	_texture_SR->SetResource(0);
-
-	SAFE_RELEASE(rtv);
-	SAFE_RELEASE(dsv);
+	_skybox->render();
 }
 
 void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 {
+
+	_device->RSSetState(_rs_state);
+	_texture_SR->SetResource(_skybox_texture_RV);
+	const D3DXMATRIX *sk_transform = _skybox->get_transform(); 
+	bump_shader_variables(sk_transform);
+	pass->Apply(0);
+	_skybox->render();
+	_device->RSSetState(_rs_default_state);
+
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
 	Deferred::Object *o = NULL;
 
@@ -244,10 +254,10 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 		// TODO: Use materials with properties
 		_texture_SR->SetResource(o->get_texture());
 
-		// Apply the shader and draw geometry
 		pass->Apply(0);
 		o->render();
 		_texture_SR->SetResource(0);
+		pass->Apply(0);
 		++it;
 	}
 
