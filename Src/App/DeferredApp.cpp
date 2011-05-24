@@ -295,8 +295,6 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 		lighting_stage();
 
 		// Reset backbuffer as render target
-		// and clear the depth stencil.
-		_device->ClearDepthStencilView( _depth_stencil, D3D10_CLEAR_DEPTH, 1.0, 0 );
 		_device->OMSetRenderTargets( 1, &_backbuffer, _depth_stencil );
 	
 		// Final composition

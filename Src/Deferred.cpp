@@ -8,6 +8,9 @@
 #include "DXUT.h"
 #include "App/DeferredApp.h"
 #include <conio.h>
+
+DeferredApp *instance;
+
 //--------------------------------------------------------------------------------------
 // Reject any D3D10 devices that aren't acceptable by returning false
 //--------------------------------------------------------------------------------------
@@ -36,6 +39,7 @@ HRESULT CALLBACK OnD3D10CreateDevice( ID3D10Device* pd3dDevice, const DXGI_SURFA
                                       void* pUserContext )
 {
 	return DeferredApp::instance()->initScene(pd3dDevice);
+	return S_OK;
 }
 
 
@@ -46,6 +50,7 @@ HRESULT CALLBACK OnD3D10ResizedSwapChain( ID3D10Device* pd3dDevice, IDXGISwapCha
                                           const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext )
 {
 	return DeferredApp::instance()->initBuffers(pd3dDevice, pBackBufferSurfaceDesc);
+	return S_OK;
 }
 
 
@@ -73,7 +78,8 @@ void CALLBACK OnD3D10FrameRender( ID3D10Device* pd3dDevice, double fTime, float 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D10ReleasingSwapChain( void* pUserContext )
 {
-	DeferredApp::instance()->clean_buffers();
+	if (instance)
+		DeferredApp::instance()->clean_buffers();
 }
 
 
@@ -198,8 +204,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 	_cprintf("Starting application...GO!\n");
 	_cprintf("Maximum simultaneous render targets supported: %i\n", D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT);
 
-	DeferredApp *app = DeferredApp::instance();
-
+	instance = DeferredApp::instance();
 
     DXUTInit( true, true, NULL ); // Parse the command line, show msgboxes on error, no extra command line params
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
@@ -209,7 +214,10 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
     // Perform any application-level cleanup here
 	FreeConsole();
-	delete app;
+
+	// Free up the singleton
+	delete instance;
+	instance = NULL;
 
     return DXUTGetExitCode();
 }
