@@ -3,6 +3,7 @@
 #include <fstream>
 #include <conio.h>
 #include <cassert>
+#include <string>
 
 using namespace Deferred;
 
@@ -16,7 +17,7 @@ const D3D10_INPUT_ELEMENT_DESC Object::LAYOUT[] =
 const UINT Object::NUM_LAYOUT_ELMS = sizeof(LAYOUT) / sizeof(LAYOUT[0]);
 
 Object::Object() :
-_mesh(NULL), _texture_RV(NULL)
+_mesh(NULL)
 {
 	D3DXMatrixIdentity(&_transform);
 }
@@ -25,13 +26,25 @@ Object::~Object()
 {
 	// Clean up D3D resources
 	SAFE_RELEASE(_mesh);
-	SAFE_RELEASE(_texture_RV);
+
+	std::vector<Material *>::iterator it = _materials.begin();
+
+	while (it != _materials.end())
+	{
+		delete *it;
+		it++;
+	}
+
+	delete _attrib_table;
 }
 
 bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 {
 	WCHAR str_command[256] = {0};
+	WCHAR material_file[256] = {0};
     std::wifstream infile(filename);
+
+	DWORD current_subset = 0;
 
 	// Temp arrays for storing pos, tex coords and normals
 	std::vector<D3DXVECTOR3> positions;
@@ -131,18 +144,38 @@ bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 				ind[i] = index; // OBJ is in clockwise order???
 			}
 
-			// Reverse vertex order
+			// Reverse vertex order (see above comment)
 			_index_list.push_back(ind[2]);
 			_index_list.push_back(ind[1]);
 			_index_list.push_back(ind[0]);
+
+			// Add a subset
+			_attributes.push_back(current_subset);
 		}
 		else if (wcscmp(str_command, L"mtllib") == 0)
 		{
-			//_cprintf("Materials not implemented yet...\n");
+			infile >> material_file;
 		}
 		else if (wcscmp(str_command, L"usemtl") == 0)
 		{
+			WCHAR material_name[200] = {0};
+			infile >> material_name;
 
+			// Check if the material exists
+			std::map<std::wstring, UINT>::iterator it;
+
+			it = _material_ids.find(std::wstring(material_name));
+
+			if (it != _material_ids.end()) // The material exists
+			{
+				current_subset = it->second;
+			}
+			else // It is a new material
+			{
+				current_subset = _materials.size();
+				_material_ids.insert(std::make_pair<std::wstring, UINT>(std::wstring(material_name), current_subset));
+				_materials.push_back(new Material());
+			}
 		}
 		else
 		{
@@ -152,14 +185,22 @@ bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 		infile.ignore(1000, '\n');
 	}
 
-	_cprintf("Done! Setting up mesh...\n");
+	infile.close();
 
+	_cwprintf(L"Done! Reading material file %s \n", material_file);
+
+	read_materials(std::wstring(material_file));
 	return set_up_mesh();
 }
 
 void Object::render()
 {
 	_mesh->DrawSubset(0);
+}
+
+void Object::render_subset(UINT subset_id)
+{
+	_mesh->DrawSubset(subset_id);
 }
 
 bool Object::set_up_mesh()
@@ -171,7 +212,7 @@ bool Object::set_up_mesh()
 	if (FAILED(hr))
 		return false;
 
-	int num_verts = _vertex_list.size();
+	//int num_verts = _vertex_list.size();
 	int num_indices = _index_list.size();
 
 	// Set up vertex list
@@ -188,21 +229,17 @@ bool Object::set_up_mesh()
 	if (FAILED(hr))
 		return false;
 
+	// Set the attribute data
+	_mesh->SetAttributeData( (UINT*)_attributes.data() );
+	_attributes.clear();
+
 	_mesh->GenerateAdjacencyAndPointReps( 1e-6f );
+	_mesh->Optimize( D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE, NULL, NULL );
 
 	// Set attributes
-    DWORD dwNumAttr = 1;
-    D3DX10_ATTRIBUTE_RANGE* pAttr = new D3DX10_ATTRIBUTE_RANGE[dwNumAttr];
-    if( !pAttr )
-        return false;
-
-    pAttr[0].AttribId = 0;
-    pAttr[0].FaceStart = 0;
-    pAttr[0].FaceCount = num_indices / 3;
-    pAttr[0].VertexStart = 0;
-    pAttr[0].VertexCount = num_verts;
-    _mesh->SetAttributeTable( pAttr, dwNumAttr );
-    SAFE_DELETE_ARRAY( pAttr );
+	_mesh->GetAttributeTable( NULL, &_num_attrib_table_entries );
+    _attrib_table = new D3DX10_ATTRIBUTE_RANGE[_num_attrib_table_entries];
+    _mesh->GetAttributeTable(_attrib_table, &_num_attrib_table_entries );
 
 	// Commit the mesh to device
 	hr = _mesh->CommitToDevice();
@@ -212,9 +249,100 @@ bool Object::set_up_mesh()
 
 	_cprintf("Done! Number of vertices: %i, faces: %i\n", _mesh->GetVertexCount(), _mesh->GetFaceCount());
 
-	// Load texture
-	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(_device, L"Media\\Textures\\fur2.jpg", NULL, NULL, &_texture_RV, NULL )))
-		  _cprintf("Could not load texture!\n");
+	return true;
+}
+
+bool Object::read_materials(std::wstring filename)
+{
+	std::wifstream infile((L"Media\\" + filename).c_str());
+
+	if (!infile)
+	{
+		_cwprintf(L"ERROR: Could not locate mtl file: %s \n", filename.c_str());
+		infile.close();
+		return false;
+	}
+
+	WCHAR command[256] = {0};
+	Material *active_material = NULL;
+
+	while (infile)
+	{
+		if(wcscmp(command, L"newmtl") == 0)
+        {
+			WCHAR mtl_name[256] = {0};
+			infile >> mtl_name;
+			std::map<std::wstring, UINT>::iterator it = _material_ids.find(std::wstring(mtl_name));
+
+			if (it == _material_ids.end())
+				continue;
+			
+			active_material = _materials.at(it->second);
+		}
+
+		if(wcscmp(command, L"#" ) == 0)
+        { /* Comment */ }
+		else if(wcscmp(command, L"Ka") == 0)
+        {
+            // Ambient color
+            float r, g, b;
+            infile >> r >> g >> b;
+            active_material->set_ambient_color(D3DXVECTOR3( r, g, b ));
+        }
+        else if(wcscmp(command, L"Kd") == 0)
+        {
+            // Diffuse color
+            float r, g, b;
+            infile >> r >> g >> b;
+			active_material->set_diffuse_color(D3DXVECTOR3( r, g, b ));
+        }
+        else if(wcscmp(command, L"Ks") == 0)
+        {
+            // Specular color
+            float r, g, b;
+            infile >> r >> g >> b;
+			active_material->set_specular_color(D3DXVECTOR3( r, g, b ));
+        }
+        else if(wcscmp(command, L"d" ) == 0 ||
+                wcscmp(command, L"Tr" ) == 0)
+        {
+            // Alpha
+			float a;
+			infile >> a;
+            active_material->set_alpha(a);
+        }
+        else if(wcscmp(command, L"Ns" ) == 0)
+        {
+            // Shininess
+            float spec_power;
+            infile >> spec_power;
+			active_material->set_specular_power(spec_power);
+        }
+        else if(wcscmp(command, L"illum" ) == 0)
+        {
+            // Specular on/off
+            int illumination;
+            infile >> illumination;
+			active_material->set_specular( illumination == 2 );
+        }
+        else if(wcscmp(command, L"map_Kd" ) == 0)
+        {
+            // Texture
+			WCHAR texture_file[256] = {0};
+            infile >> texture_file;
+
+			active_material->create_texture(_device, std::wstring(texture_file));
+        }
+
+        else
+        {
+            // Unimplemented or unrecognized command
+        }
+
+		infile.ignore(1000, '\n');
+	}
+
+	infile.close();
 
 	return true;
 }

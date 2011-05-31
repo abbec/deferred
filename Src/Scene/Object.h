@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+#include "Material.h"
+
 namespace Deferred
 {
 
@@ -33,7 +35,9 @@ namespace Deferred
 
 		bool read_from_obj(ID3D10Device *device, std::string filename);
 		void render();
-		ID3D10ShaderResourceView *get_texture() { return _texture_RV; }
+		void render_subset(UINT subset_id);
+
+		Material *get_subset_material(UINT subset_id);
 
 		void set_transform(D3DXMATRIX *transform) { _transform = *transform; }
 		const D3DXMATRIX *get_transform() { return &_transform; }
@@ -41,15 +45,21 @@ namespace Deferred
 	private:
 
 		bool set_up_mesh();
+		bool read_materials(std::wstring filename);
 
 		ID3DX10Mesh *_mesh;
 		ID3D10Device *_device;
 
 		std::vector<Vertex> _vertex_list;
 		std::vector<DWORD> _index_list;
+		std::vector<DWORD> _attributes;
 		std::map<UINT, VertexEntry> _unique_verts;
 
-		ID3D10ShaderResourceView *_texture_RV;
+		std::vector<Material*> _materials;
+		std::map<std::wstring, UINT> _material_ids;
+
+		UINT _num_attrib_table_entries;
+		D3DX10_ATTRIBUTE_RANGE *_attrib_table;
 
 		D3DXMATRIX _transform;
 
