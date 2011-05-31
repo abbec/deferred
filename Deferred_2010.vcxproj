@@ -402,6 +402,7 @@
     <ClCompile Include="Src\DXUT\Optional\DXUTShapes.cpp" />
     <ClCompile Include="Src\DXUT\Optional\SDKmesh.cpp" />
     <ClCompile Include="Src\DXUT\Optional\SDKmisc.cpp" />
+    <ClCompile Include="Src\Scene\Material.cpp" />
     <ClCompile Include="Src\Scene\Object.cpp" />
     <ClCompile Include="Src\Scene\Scene.cpp" />
     <ClCompile Include="Src\Util\BoundingFrustum.cpp" />

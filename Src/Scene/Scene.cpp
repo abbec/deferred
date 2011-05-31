@@ -212,7 +212,6 @@ void Scene::bump_light_variables(Deferred::Light *l)
 
 	if (l->get_type() == Deferred::Light::DIRECTIONAL)
 	{
-
 		Deferred::DirectionalLight *dl = (Deferred::DirectionalLight *) l;
 
 		D3DXVECTOR3 ldir((float *) dl->get_direction());
@@ -251,7 +250,7 @@ void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
 
 		// Get the object texture
 		// TODO: Use materials with properties
-		_texture_SR->SetResource(o->get_texture());
+		//_texture_SR->SetResource(o->get_texture());
 
 		pass->Apply(0);
 		o->render();
