@@ -35,7 +35,7 @@ Object::~Object()
 		it++;
 	}
 
-	delete _attrib_table;
+	SAFE_DELETE_ARRAY(_attrib_table);
 }
 
 bool Object::read_from_obj(ID3D10Device *device, std::string filename)
