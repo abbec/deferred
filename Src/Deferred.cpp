@@ -204,7 +204,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 	instance = DeferredApp::instance();
 
-    DXUTInit( true, true, NULL ); // Parse the command line, show msgboxes on error, no extra command line params
+    DXUTInit( true, false, NULL ); // Parse the command line, show NO msgboxes on error, no extra command line params
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
     DXUTCreateWindow( L"DeferredRendererrrrr" );
     DXUTCreateDevice( true, 800, 600 );
