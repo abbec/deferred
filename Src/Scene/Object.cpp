@@ -268,6 +268,8 @@ bool Object::read_materials(std::wstring filename)
 
 	while (infile)
 	{
+		infile >> command;
+
 		if(wcscmp(command, L"newmtl") == 0)
         {
 			WCHAR mtl_name[256] = {0};
@@ -331,13 +333,25 @@ bool Object::read_materials(std::wstring filename)
 			WCHAR texture_file[256] = {0};
             infile >> texture_file;
 
-			active_material->create_texture(_device, std::wstring(texture_file));
+			active_material->create_texture(_device, L"Media\\" + std::wstring(texture_file));
         }
 
         else
         {
             // Unimplemented or unrecognized command
         }
+
+		if (active_material)
+		{
+			if (active_material->is_specular() && active_material->has_texture())
+				active_material->set_technique("GeometryStage");
+			else if (active_material->is_specular())
+				active_material->set_technique("GeometryStageNoTexture");
+			else if (active_material->has_texture())
+				active_material->set_technique("GeometryStageNoSpecular");
+			else
+				active_material->set_technique("GeometryStageNoSpecularNoTexture");
+		}
 
 		infile.ignore(1000, '\n');
 	}

@@ -67,7 +67,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd Untitled
+map_Kd Textures\\fur.jpg
 
 newmtl Material.002_Untitled.002
 Ns 66.666667
@@ -77,7 +77,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd Untitled
+map_Kd Textures\\fabric1.jpg
 
 
 newmtl PANTS_Leather0088_S.jpg

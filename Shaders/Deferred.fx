@@ -15,12 +15,13 @@ cbuffer everyFrame
 	float3x3 WorldViewInverse;
 	matrix Projection;
 	float SpecularIntensity;
-	float SpecularRoughness;
+	float SpecularPower;
 	matrix Ortho;
 	float3 LightDir;
 	float4 LightColor;
 	float3 LightPosition;
 	bool bLit;
+	float4 DiffuseColor;
 }
 
 //--------------------------------------------------------------------------------------
@@ -137,7 +138,7 @@ DepthStencilState NoDepthTest
 //--------------------------------------------------------------------------------------
 // G Buffer Vertex Shader
 //--------------------------------------------------------------------------------------
-VS_OUTPUT GBufferVS( VS_INPUT input )
+VS_OUTPUT GBufferVS( VS_INPUT input)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
 
@@ -161,15 +162,24 @@ VS_OUTPUT GBufferVS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 // G Buffer Pixel Shader
 //--------------------------------------------------------------------------------------
-PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input )
+PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input, uniform bool textured, uniform bool specular)
 {
 	PS_MRT_OUTPUT output;
 
-	// Render to g_buffer
+	// Render to G buffer
 	output.normal = float4(normalize(input.Normal), 1.0);
 	float depth = -input.VS_Pos.z/FarClipDistance;
-	output.depth = float4(depth, SpecularIntensity, SpecularRoughness, 1.0);
-	output.albedo = float4(AlbedoTexture.Sample( samLinear, input.TexCoord ).rgb, 1.0);
+
+	float specI = 0.0;
+	if (specular)
+		 specI = SpecularIntensity;
+
+	output.depth = float4(depth, specI, SpecularPower, 1.0);
+
+	if (textured)
+		output.albedo = float4(AlbedoTexture.Sample( samLinear, input.TexCoord ).rgb, 1.0)*DiffuseColor;
+	else
+		output.albedo = DiffuseColor;
 
 	return output;
 }
@@ -259,7 +269,7 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 
 	float HdotN = saturate(dot(normal.xyz, H));
 
-	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y);
+	float3 spec = specInfo.x * (float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y));
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
 	return float4((diff+spec)*LightColor.xyz, normal.a);
@@ -299,7 +309,7 @@ float4 PointLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 
 	float HdotN = saturate(dot(normal.xyz, H));
 
-	float3 spec = float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y);
+	float3 spec = specInfo.x * (float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y));
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
 	return float4((diff+spec)*LightColor.xyz, normal.a);
@@ -349,21 +359,67 @@ float4 ScreenAlbedoPS(VS_SCREENOUTPUT Input) : SV_Target
 	return Albedo.Load(float3(pos.xy, 0));
 }
 
-//--------------------------------------------------------------------------------------
+float4 ScreenSpecularIntensityPS(VS_SCREENOUTPUT Input) : SV_Target
+{
+	float4 pos = Input.Position;
 
+	return Depth.Load(float3(pos.xy, 0)).y;
+}
 
+//===============================================
+// G-Buffer techniques
+//===============================================
 technique10 GeometryStage
 {
     pass P0
     {
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
-        SetPixelShader( CompileShader( ps_4_0, GBufferPS() ) );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, true) ) );
 		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
 
+technique10 GeometryStageNoTexture
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(false, true) ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
+    }
+}
+
+technique10 GeometryStageNoSpecular
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, false) ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
+    }
+}
+
+technique10 GeometryStageNoSpecularNoTexture
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(false, false) ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
+    }
+}
+
+//=======================================================
+// Lighting Techniques
+//=======================================================
 
 technique10 AmbientLight
 {
@@ -402,7 +458,9 @@ technique10 PointLight
     }
 }
 
+//============================================
 // For rendering different states
+//============================================
 
 technique10 RenderToQuad // Final compositing
 {
@@ -444,6 +502,16 @@ technique10 RenderAlbedoToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenAlbedoPS() ) );
+    }
+}
+
+technique10 RenderSpecularIntensityToQuad
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, ScreenSpecularIntensityPS() ) );
     }
 }
 

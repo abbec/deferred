@@ -89,7 +89,10 @@ HRESULT DeferredApp::initScene(ID3D10Device *device)
     if( FAILED( hr ) )
     {
       	if (ppErrors)
+		{
 			_cprintf("Shader compile error: %s\n", (char*)ppErrors->GetBufferPointer());
+			_getch();
+		}
 
 		return hr;
     }
@@ -300,7 +303,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 		// Final composition
 		render_to_quad();
 	}
-	else
+	/*else
 	{
 
 		ID3D10EffectTechnique *temp = _effect->GetTechniqueByName("GBufferToScreen");
@@ -313,7 +316,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 		// Render scene
 		for( UINT p = 0; p < techDesc.Passes; ++p )
 			_scene.render(_device, temp->GetPassByIndex( p ));
-	}
+	}*/
 
 	// Render text
 	_hud->render();
@@ -335,6 +338,9 @@ void DeferredApp::render_to_quad()
 		break;
 	case ALBEDO:
 		pRenderTechnique = _render_albedo_to_quad;
+		break;
+	case SPECULAR_INTENSITY:
+		pRenderTechnique = _effect->GetTechniqueByName("RenderSpecularIntensityToQuad");
 		break;
 	default:
 		pRenderTechnique = _render_to_quad;
@@ -421,11 +427,5 @@ void DeferredApp::geometry_stage()
     _device->OMSetRenderTargets(GBUFFER_SIZE, views, _depth_stencil);
 	_device->IASetInputLayout(_layout);
 
-    D3D10_TECHNIQUE_DESC techDesc;
-	
-    _geometry_stage->GetDesc( &techDesc );
-	
-	// Render scene
-	for( UINT p = 0; p < techDesc.Passes; ++p )
-		_scene.render(_device, _geometry_stage->GetPassByIndex( p ));
+	_scene.render(_device, _effect);
 }

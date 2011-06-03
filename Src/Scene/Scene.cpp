@@ -92,7 +92,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	_skybox->set_transform(&skybox);
 
 	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(device, L"Media\\Textures\\sky.jpg", NULL, NULL, &_skybox_texture_RV, NULL )))
-		  _cprintf("Could not load texture!\n");
+		  _cprintf("Could not load skysphere texture!\n");
 
 	// Set up lighting
 	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(0.5, 0.5, 0.5, 1.0), 
@@ -155,16 +155,16 @@ LRESULT Scene::handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	return _camera.HandleMessages(hWnd, uMsg, wParam, lParam);
 }
 
-void Scene::bump_shader_variables(const D3DXMATRIX *translation)
+void Scene::bump_shader_variables(const Deferred::Object *o, const Deferred::Material *m)
 {
+
 	// Update variables
 	D3DXMatrixIdentity(&_world);
-	//_world = *_camera.GetWorldMatrix();
 	_view = *_camera.GetViewMatrix();
 	_projection = *_camera.GetProjMatrix();
 
 	D3DXMATRIX world_view;
-	D3DXMatrixMultiply(&_world, &_world, translation);
+	D3DXMatrixMultiply(&_world, &_world, o->get_transform());
 	
 	world_view = _world * _view;
 
@@ -194,8 +194,15 @@ void Scene::bump_shader_variables(const D3DXMATRIX *translation)
 	_far_plane_corners_variable->SetFloatVectorArray((float*) corners, 0, 4);
 
 	_wv_inverse->SetMatrix((float *)&_world_view_inv);
-	_spec_intensity_var->SetFloat(0.8);
-	_effect->GetVariableByName("SpecularRoughness")->AsScalar()->SetFloat(758.8);
+
+
+	_spec_intensity_var->SetFloat(m->get_specular_intensity());
+	_effect->GetVariableByName("SpecularPower")->AsScalar()->SetFloat(m->get_specular_power());
+	_effect->GetVariableByName("DiffuseColor")->AsVector()->SetFloatVector((float *) m->get_diffuse_color());
+
+	_texture_SR->SetResource(m->get_texture());
+
+
 	delete[] corners;
 }
 
@@ -226,36 +233,61 @@ void Scene::bump_light_variables(Deferred::Light *l)
 
 void Scene::render_skybox(ID3D10Device *device)
 {
-	_skybox->render();
+	//_skybox->render();
 }
 
-void Scene::render(ID3D10Device *device, ID3D10EffectPass *pass)
+void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 {
+
+	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("GeometryStageNoSpecular");
+	D3D10_TECHNIQUE_DESC techDesc;
+
+	/*tech->GetDesc(&techDesc);
 
 	_device->RSSetState(_rs_state);
 	_texture_SR->SetResource(_skybox_texture_RV);
 	const D3DXMATRIX *sk_transform = _skybox->get_transform(); 
-	bump_shader_variables(sk_transform);
-	pass->Apply(0);
-	_skybox->render();
-	_device->RSSetState(_rs_default_state);
+	bump_shader_variables(_skybox, _skybox->get_subset_material(0));
 
+	for( UINT p = 0; p < techDesc.Passes; ++p )
+	{
+		tech->GetPassByIndex(p)->Apply(0);
+		_skybox->render();
+	}
+
+	_device->RSSetState(_rs_default_state);*/
+
+
+	// Render all objects
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
 	Deferred::Object *o = NULL;
+	UINT num_subsets;
+	const Deferred::Material *m = NULL;
 
 	while (it != _objects.end())
 	{
 		o = *it;
-		bump_shader_variables(o->get_transform());
 
-		// Get the object texture
-		// TODO: Use materials with properties
-		//_texture_SR->SetResource(o->get_texture());
+		num_subsets = o->get_num_subsets();
 
-		pass->Apply(0);
-		o->render();
-		_texture_SR->SetResource(0);
-		pass->Apply(0);
+		for (UINT i = 0; i < num_subsets; i++)
+		{
+			m = o->get_subset_material(i);
+			tech = _effect->GetTechniqueByName(m->get_technique().c_str());
+			tech->GetDesc(&techDesc);
+
+			bump_shader_variables(o, m);
+
+			for( UINT p = 0; p < techDesc.Passes; ++p )
+			{
+				tech->GetPassByIndex(p)->Apply(0);
+				o->render_subset(i);
+			
+				_texture_SR->SetResource(0);
+				tech->GetPassByIndex(p)->Apply(0);
+			}
+		}
+			
 		++it;
 	}
 
