@@ -37,10 +37,12 @@ namespace Deferred
 		void render();
 		void render_subset(UINT subset_id);
 
-		Material *get_subset_material(UINT subset_id);
+		const Material *get_subset_material(UINT subset_id) const { return _materials.at( _attrib_table[subset_id].AttribId ); }
+
+		UINT get_num_subsets() { return _num_attrib_table_entries; }
 
 		void set_transform(D3DXMATRIX *transform) { _transform = *transform; }
-		const D3DXMATRIX *get_transform() { return &_transform; }
+		const D3DXMATRIX *get_transform() const { return &_transform; }
 
 	private:
 

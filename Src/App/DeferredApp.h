@@ -16,7 +16,7 @@ public:
 	static DeferredApp *instance();
 
 	// Rendering states
-	const enum states {NORMALS = 1, DEPTH = 2, ALBEDO = 3, FINAL = 5};
+	const enum states {NORMALS = 1, DEPTH = 2, ALBEDO = 3, SPECULAR_INTENSITY = 4, FINAL = 5};
 	const enum {GBUFFER_SIZE = 3};
 	const enum {PBUFFER_SIZE = 2};
 

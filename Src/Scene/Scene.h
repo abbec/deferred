@@ -23,7 +23,7 @@ public:
 	HRESULT init(ID3D10Device *device, ID3D10Effect *effect);
 	HRESULT on_resize(const DXGI_SURFACE_DESC *back_buffer_desc);
 	void on_resize_release();
-	void render(ID3D10Device *device, ID3D10EffectPass *pass);
+	void render(ID3D10Device *device, ID3D10Effect *effect);
 	void render_skybox(ID3D10Device *device);
 	void draw_lights(ID3D10Device *device);
 	void rotate(D3DXVECTOR3 &at);
@@ -64,7 +64,7 @@ private:
 
 	D3DXVECTOR3 _ambient_color;
 	
-	void bump_shader_variables(const D3DXMATRIX *translation);
+	void bump_shader_variables(const Deferred::Object *o, const Deferred::Material *m);
 	void bump_light_variables(Deferred::Light *l);
 	
 };
