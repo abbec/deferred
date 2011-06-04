@@ -22,6 +22,7 @@ cbuffer everyFrame
 	float3 LightPosition;
 	bool bLit;
 	float4 DiffuseColor;
+	float Alpha;
 }
 
 //--------------------------------------------------------------------------------------
@@ -92,9 +93,9 @@ BlendState SrcColorBlendingAdd
 
 BlendState SrcAlphaBlendingAdd
 {
-    BlendEnable[0] = TRUE;
+    BlendEnable[2] = TRUE;
     SrcBlend = SRC_ALPHA;
-    DestBlend = INV_SRC_ALPHA;
+    DestBlend = ONE;
     BlendOp = ADD;
     SrcBlendAlpha = ZERO;
     DestBlendAlpha = ZERO;
@@ -105,6 +106,13 @@ BlendState SrcAlphaBlendingAdd
 BlendState NoBlending
 {
     BlendEnable[0] = FALSE;
+	BlendEnable[1] = FALSE;
+	BlendEnable[2] = FALSE;
+	BlendEnable[3] = FALSE;
+	BlendEnable[4] = FALSE;
+	BlendEnable[5] = FALSE;
+	BlendEnable[6] = FALSE;
+	BlendEnable[7] = FALSE;
 };
 
 DepthStencilState DepthTest
@@ -180,6 +188,8 @@ PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input, uniform bool textured, uniform bool sp
 		output.albedo = float4(AlbedoTexture.Sample( samLinear, input.TexCoord ).rgb, 1.0)*DiffuseColor;
 	else
 		output.albedo = DiffuseColor;
+
+	output.albedo.a = Alpha;
 
 	return output;
 }
@@ -272,7 +282,7 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	float3 spec = specInfo.x * (float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y));
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
-	return float4((diff+spec)*LightColor.xyz, normal.a);
+	return float4((diff+spec)*LightColor.xyz, 1.0);
 }
 
 // Point lights
@@ -312,7 +322,7 @@ float4 PointLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	float3 spec = specInfo.x * (float3(1.0, 1.0, 1.0) * pow(saturate(dot(normal.xyz, H)), specInfo.y));
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
-	return float4((diff+spec)*LightColor.xyz, normal.a);
+	return float4((diff+spec)*LightColor.xyz, 1.0);
 }
 
 //--------------------------------------------------------------------------------------
@@ -376,7 +386,7 @@ technique10 GeometryStage
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, true) ) );
-		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
@@ -388,7 +398,7 @@ technique10 GeometryStageNoTexture
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(false, true) ) );
-		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
@@ -400,7 +410,7 @@ technique10 GeometryStageNoSpecular
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, false) ) );
-		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
@@ -412,7 +422,7 @@ technique10 GeometryStageNoSpecularNoTexture
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(false, false) ) );
-		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
@@ -470,7 +480,7 @@ technique10 RenderToQuad // Final compositing
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenPS() ) );
-
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(NoDepthTest, 0);
     }
 }

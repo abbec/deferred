@@ -20,6 +20,12 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{ab88dff9-a671-4e9d-83f7-0a06abdeb2bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Media">
+      <UniqueIdentifier>{2e513c2e-79ff-4d89-b502-4829969dc892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Media\Textures">
+      <UniqueIdentifier>{c77a0b50-45e5-4ac1-985d-5174fe29bc61}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -143,6 +149,54 @@
     </None>
     <None Include="Shaders\Deferred.fx">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="Media\viking.mtl">
+      <Filter>Media</Filter>
+    </None>
+    <None Include="Media\aspen.mtl">
+      <Filter>Media</Filter>
+    </None>
+    <None Include="Media\Textures\test_tex.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\sky.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\leather.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\iris.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\fur3.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\fur2.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\fur.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\fabric2.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\Textures\fabric1.jpg">
+      <Filter>Media\Textures</Filter>
+    </None>
+    <None Include="Media\aspen.obj">
+      <Filter>Media</Filter>
+    </None>
+    <None Include="Media\cup.obj">
+      <Filter>Media</Filter>
+    </None>
+    <None Include="Media\monkey.obj">
+      <Filter>Media</Filter>
+    </None>
+    <None Include="Media\skysphere.obj">
+      <Filter>Media</Filter>
+    </None>
+    <None Include="Media\viking.obj">
+      <Filter>Media</Filter>
     </None>
   </ItemGroup>
 </Project>
