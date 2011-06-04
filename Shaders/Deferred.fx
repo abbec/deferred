@@ -100,7 +100,7 @@ BlendState SrcAlphaBlendingAdd
     SrcBlendAlpha = ZERO;
     DestBlendAlpha = ZERO;
     BlendOpAlpha = ADD;
-    RenderTargetWriteMask[0] = 0x0F;
+    RenderTargetWriteMask[2] = 0x0F;
 };
 
 BlendState NoBlending
@@ -128,18 +128,8 @@ DepthStencilState NoDepthTest
     DepthWriteMask = ZERO;
     DepthFunc = Less;
     
-    // Setup stencil states
+    // Stencil off
     StencilEnable = false;
-    StencilReadMask = 0xFF;
-    StencilWriteMask = 0x00;
-    
-    FrontFaceStencilFunc = Not_Equal;
-    FrontFaceStencilPass = Keep;
-    FrontFaceStencilFail = Zero;
-    
-    BackFaceStencilFunc = Not_Equal;
-    BackFaceStencilPass = Keep;
-    BackFaceStencilFail = Zero;
 };
 
 
@@ -242,7 +232,7 @@ VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOOR
 float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
-	return 1.0 * float4(color, 1.0);
+	return 0.5 * float4(color, 1.0);
 }
 
 // Directional lights
@@ -386,7 +376,7 @@ technique10 GeometryStage
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, true) ) );
-		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
@@ -398,7 +388,7 @@ technique10 GeometryStageNoTexture
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(false, true) ) );
-		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
@@ -410,12 +400,63 @@ technique10 GeometryStageNoSpecular
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, false) ) );
-		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
 
 technique10 GeometryStageNoSpecularNoTexture
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(false, false) ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
+    }
+}
+
+//===============================================
+// G-Buffer techniques WITH ALPHA BLENDING
+//===============================================
+technique10 GeometryStageAlpha
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, true) ) );
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
+    }
+}
+
+technique10 GeometryStageNoTextureAlpha
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(false, true) ) );
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
+    }
+}
+
+technique10 GeometryStageNoSpecularAlpha
+{
+    pass P0
+    {
+        SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, false) ) );
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(DepthTest, 0);
+    }
+}
+
+technique10 GeometryStageNoSpecularNoTextureAlpha
 {
     pass P0
     {

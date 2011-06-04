@@ -665,9 +665,9 @@ D3DUtil_CameraKeys CBaseCamera::MapKey( UINT nKey )
             return CAM_STRAFE_LEFT;
         case 'D':
             return CAM_STRAFE_RIGHT;
-        case 'W':
-            return CAM_MOVE_FORWARD;
         case 'S':
+            return CAM_MOVE_FORWARD;
+        case 'W':
             return CAM_MOVE_BACKWARD;
         case 'Q':
             return CAM_MOVE_DOWN;
