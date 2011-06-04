@@ -432,8 +432,36 @@
     <ResourceCompile Include="Deferred.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Media\aspen.mtl" />
+    <None Include="Media\Textures\fabric1.jpg" />
+    <None Include="Media\Textures\fabric2.jpg" />
+    <None Include="Media\Textures\fur.jpg" />
+    <None Include="Media\Textures\fur2.jpg" />
+    <None Include="Media\Textures\fur3.jpg" />
+    <None Include="Media\Textures\iris.jpg" />
+    <None Include="Media\Textures\leather.jpg" />
+    <None Include="Media\Textures\sky.jpg" />
+    <None Include="Media\Textures\test_tex.jpg" />
+    <None Include="Media\viking.mtl" />
     <None Include="Shaders\Deferred.fx" />
     <None Include="Src\DXUT\Optional\directx.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Media\aspen.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Media\cup.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Media\monkey.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Media\skysphere.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Media\viking.obj">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

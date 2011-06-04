@@ -13,9 +13,10 @@ illum 2
 newmtl EYE_iris
 Ns 437.254902
 Ka 0.000000 0.000000 0.000000
-Kd 0.727438 0.714896 0.824412
+Kd 0.0 0.714896 0.0
 Ks 0.797478 0.797478 0.797478
 Ni 1.000000
+# SHALL BE 0.000000
 d 0.000000
 illum 2
 
@@ -28,7 +29,7 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 1
-map_Kd Textures\\iris.jpg
+#map_Kd Textures\\iris.jpg
 
 
 newmtl HAT

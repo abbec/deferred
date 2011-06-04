@@ -198,6 +198,7 @@ void Scene::bump_shader_variables(const Deferred::Object *o, const Deferred::Mat
 
 	_spec_intensity_var->SetFloat(m->get_specular_intensity());
 	_effect->GetVariableByName("SpecularPower")->AsScalar()->SetFloat(m->get_specular_power());
+	_effect->GetVariableByName("Alpha")->AsScalar()->SetFloat(m->get_alpha());
 	_effect->GetVariableByName("DiffuseColor")->AsVector()->SetFloatVector((float *) m->get_diffuse_color());
 
 	_texture_SR->SetResource(m->get_texture());
@@ -261,6 +262,8 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 	// Render all objects
 	std::vector<Deferred::Object *>::iterator it = _objects.begin();
 	Deferred::Object *o = NULL;
+	std::vector<UINT> transparent;
+	std::vector<UINT>::iterator it2;
 	UINT num_subsets;
 	const Deferred::Material *m = NULL;
 
@@ -273,6 +276,34 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 		for (UINT i = 0; i < num_subsets; i++)
 		{
 			m = o->get_subset_material(i);
+
+			if (m->get_alpha() < 1.0)
+			{
+				transparent.push_back(i);
+			}
+			else
+			{
+				tech = _effect->GetTechniqueByName(m->get_technique().c_str());
+				tech->GetDesc(&techDesc);
+
+				bump_shader_variables(o, m);
+
+				for( UINT p = 0; p < techDesc.Passes; ++p )
+				{
+					tech->GetPassByIndex(p)->Apply(0);
+					o->render_subset(i);
+			
+					_texture_SR->SetResource(0);
+					tech->GetPassByIndex(p)->Apply(0);
+				}
+			}
+		}
+
+		// Render transparent subsets last
+		it2 = transparent.begin();
+		while (it2 != transparent.end())
+		{
+			m = o->get_subset_material(*it2);
 			tech = _effect->GetTechniqueByName(m->get_technique().c_str());
 			tech->GetDesc(&techDesc);
 
@@ -281,13 +312,16 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 			for( UINT p = 0; p < techDesc.Passes; ++p )
 			{
 				tech->GetPassByIndex(p)->Apply(0);
-				o->render_subset(i);
-			
+				o->render_subset(*it2);
+
 				_texture_SR->SetResource(0);
 				tech->GetPassByIndex(p)->Apply(0);
 			}
+
+			++it2;
 		}
-			
+	
+		transparent.clear();
 		++it;
 	}
 
