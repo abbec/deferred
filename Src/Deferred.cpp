@@ -108,9 +108,10 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 //--------------------------------------------------------------------------------------
 void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext )
 {
-
 	if (!bKeyDown)
 	{
+		D3DXVECTOR3 at;
+
 		switch (nChar)
 		{
 		case 49: case 97:
@@ -140,6 +141,10 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 		case 78:
 			DeferredApp::instance()->deferred_rendering();
 			_cprintf("Using deferred rendering.\n");
+			break;
+		case 'C':
+			at = *DeferredApp::instance()->getScene()->camera_at();
+			_cprintf("Camera is at (%f, %f, %f)\n", at.x, at.y, at.z);
 			break;
 		default:
 			_cprintf("Pressed key: %i\n", nChar);

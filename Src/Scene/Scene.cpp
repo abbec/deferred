@@ -69,6 +69,9 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	D3DXMATRIX translate;
 	D3DXMatrixTranslation(&translate, 0.0f, 50.0f, 0.0f);
 
+	D3DXMATRIX translate2;
+	D3DXMatrixTranslation(&translate2, 0.0f, 3.4f, -2.0f);
+
 	//obj->set_transform(&skybox);
 
 	_objects.push_back(obj);
@@ -81,6 +84,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 		return E_FAIL;
 	}
 
+	obj->set_transform(&translate2);
 	_objects.push_back(obj);
 
 	D3DXMATRIX skybox;
@@ -91,8 +95,11 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	_skybox->read_from_obj(_device, "Media\\skysphere.obj");
 	_skybox->set_transform(&skybox);
 
-	if ( FAILED( D3DX10CreateShaderResourceViewFromFile(device, L"Media\\Textures\\sky.jpg", NULL, NULL, &_skybox_texture_RV, NULL )))
-		  _cprintf("Could not load skysphere texture!\n");
+	Deferred::Material *sb_material = new Deferred::Material();
+	sb_material->set_diffuse_color(D3DXVECTOR3(1.0, 1.0, 1.0));
+	sb_material->create_texture(_device, L"Media\\Textures\\sky.jpg");
+
+	_skybox->set_single_material(sb_material);
 
 	// Set up lighting
 	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(0.5, 0.5, 0.5, 1.0), 
@@ -109,7 +116,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
     D3DXMatrixIdentity( &_world );
 
 	// Set up a ModelView Camera
-	D3DXVECTOR3 Eye( 0.0f, 0.0f, 2.0f );
+	D3DXVECTOR3 Eye( 8.0f, 8.0f, 0.0f );
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
 	_camera.SetViewParams(&Eye, &At);
 	_camera.SetProjParams(( float )D3DX_PI * 0.5f, width / ( float )height, 0.1f, 100.0f);
@@ -126,6 +133,11 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 void Scene::update(double fTime, float fElapsedTime, void* pUserContext)
 {
 	_camera.FrameMove(fElapsedTime);
+}
+
+const D3DXVECTOR3 *Scene::camera_at()
+{
+	return _camera.GetEyePt();
 }
 
 HRESULT Scene::on_resize(const DXGI_SURFACE_DESC *back_buffer_desc)
@@ -243,11 +255,10 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("GeometryStageNoSpecular");
 	D3D10_TECHNIQUE_DESC techDesc;
 
-	/*tech->GetDesc(&techDesc);
+	tech->GetDesc(&techDesc);
 
 	_device->RSSetState(_rs_state);
 	_texture_SR->SetResource(_skybox_texture_RV);
-	const D3DXMATRIX *sk_transform = _skybox->get_transform(); 
 	bump_shader_variables(_skybox, _skybox->get_subset_material(0));
 
 	for( UINT p = 0; p < techDesc.Passes; ++p )
@@ -256,7 +267,7 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 		_skybox->render();
 	}
 
-	_device->RSSetState(_rs_default_state);*/
+	_device->RSSetState(_rs_default_state);
 
 
 	// Render all objects
@@ -304,7 +315,9 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 		while (it2 != transparent.end())
 		{
 			m = o->get_subset_material(*it2);
-			tech = _effect->GetTechniqueByName(m->get_technique().c_str());
+			std::string tech_name(m->get_technique());
+			tech_name.append("Alpha");
+			tech = _effect->GetTechniqueByName(tech_name.c_str());
 			tech->GetDesc(&techDesc);
 
 			bump_shader_variables(o, m);

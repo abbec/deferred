@@ -39,6 +39,8 @@ namespace Deferred
 
 		const Material *get_subset_material(UINT subset_id) const { return _materials.at( _attrib_table[subset_id].AttribId ); }
 
+		void set_single_material(Material *m){ _materials.clear(); _materials.push_back(m);}
+
 		UINT get_num_subsets() { return _num_attrib_table_entries; }
 
 		void set_transform(D3DXMATRIX *transform) { _transform = *transform; }

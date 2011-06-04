@@ -28,6 +28,8 @@ public:
 	void draw_lights(ID3D10Device *device);
 	void rotate(D3DXVECTOR3 &at);
 
+	const D3DXVECTOR3 *camera_at();
+
 	void update(double fTime, float fElapsedTime, void* pUserContext);
 
 	LRESULT handle_messages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
