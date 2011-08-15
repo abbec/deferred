@@ -74,8 +74,8 @@ struct VS_SCREENOUTPUT
 SamplerState samLinear
 {
     Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Clamp;
-    AddressV = Clamp;
+    AddressU = Wrap;
+    AddressV = Wrap;
 };
 
 
