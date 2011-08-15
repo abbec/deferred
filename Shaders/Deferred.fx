@@ -83,7 +83,7 @@ BlendState SrcColorBlendingAdd
 {
     BlendEnable[0] = TRUE;
     SrcBlend = SRC_COLOR;
-    DestBlend = DEST_COLOR;
+    DestBlend = ONE;
     BlendOp = ADD;
     SrcBlendAlpha = ONE;
     DestBlendAlpha = ONE;
@@ -232,7 +232,7 @@ VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOOR
 float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
-	return 0.6*float4(color, 1.0);
+	return 0.7*float4(color, 1.0);
 }
 
 // Directional lights
@@ -533,6 +533,8 @@ technique10 RenderNormalsToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenNormalsPS() ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -543,6 +545,8 @@ technique10 RenderDepthToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenDepthPS() ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -553,6 +557,8 @@ technique10 RenderAlbedoToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenAlbedoPS() ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -563,6 +569,8 @@ technique10 RenderSpecularIntensityToQuad
         SetVertexShader( CompileShader( vs_4_0, ScreenVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, ScreenSpecularIntensityPS() ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -574,6 +582,8 @@ technique10 GBufferToScreen
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferToScreenPS() ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }
 
@@ -584,5 +594,7 @@ technique10 SkyBox
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, SkyBoxPS() ) );
+		SetBlendState(NoBlending, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetDepthStencilState(NoDepthTest, 0);
     }
 }

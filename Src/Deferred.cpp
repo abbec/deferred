@@ -142,6 +142,9 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 			DeferredApp::instance()->deferred_rendering();
 			_cprintf("Using deferred rendering.\n");
 			break;
+		case 122:
+			DXUTToggleFullScreen();
+			break;
 		case 'C':
 			at = *DeferredApp::instance()->getScene()->camera_at();
 			_cprintf("Camera is at (%f, %f, %f)\n", at.x, at.y, at.z);
@@ -216,6 +219,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
     DXUTInit( true, false, NULL ); // Parse the command line, show NO msgboxes on error, no extra command line params
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
     DXUTCreateWindow( L"DeferredRendererrrrr" );
+	DXUTSetIsInGammaCorrectMode(false); // Tell DX that I am not doing gamma correction :)
     DXUTCreateDevice( true, 800, 600 );
     DXUTMainLoop(); // Enter into the DXUT render loop
 
