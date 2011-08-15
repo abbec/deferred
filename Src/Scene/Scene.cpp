@@ -105,10 +105,10 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	_lights.push_back(new Deferred::DirectionalLight(D3DXVECTOR4(0.5, 0.5, 0.5, 1.0), 
 		D3DXVECTOR3(1.0, 1.0, 5.0), D3DXVECTOR3(0.0, 0.0, 0.0) - D3DXVECTOR3(1.0, 1.0, 5.0)));
 
-	_lights.push_back(new Deferred::PointLight(D3DXVECTOR4(1.0, 0.0, 0.0, 1.0), 
+	_lights.push_back(new Deferred::PointLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
 		D3DXVECTOR3(-5.0, 0.0, 0.0)));
 
-	_lights.push_back(new Deferred::PointLight(D3DXVECTOR4(0.0, 1.0, 0.0, 1.0), 
+	_lights.push_back(new Deferred::PointLight(D3DXVECTOR4(1.0, 1.0, 1.0, 1.0), 
 		D3DXVECTOR3(5.0, 0.0, 0.0)));
 
 
