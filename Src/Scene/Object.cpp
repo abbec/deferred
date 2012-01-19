@@ -40,6 +40,10 @@ Object::~Object()
 
 bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 {
+
+	Material m;
+	m.create_texture_from_tga(device, L"Media\\Textures\\background.tga");
+
 	WCHAR str_command[256] = {0};
 	WCHAR material_file[256] = {0};
     std::wifstream infile(filename);
@@ -305,8 +309,7 @@ bool Object::read_materials(std::wstring filename)
             infile >> r >> g >> b;
 			active_material->set_specular_color(D3DXVECTOR3( r, g, b ));
         }
-        else if(wcscmp(command, L"d" ) == 0 ||
-                wcscmp(command, L"Tr" ) == 0)
+        else if(wcscmp(command, L"d" ) == 0)
         {
             // Alpha
 			float a;

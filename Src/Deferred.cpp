@@ -149,8 +149,6 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 			at = *DeferredApp::instance()->getScene()->camera_at();
 			_cprintf("Camera is at (%f, %f, %f)\n", at.x, at.y, at.z);
 			break;
-		default:
-			_cprintf("Pressed key: %i\n", nChar);
 		}
 
 	}

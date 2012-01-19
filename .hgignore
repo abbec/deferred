@@ -57,3 +57,4 @@ ignore[.-]*
 svnignore[.-]*
 lint.db
 *.opensdf
+*.tga
