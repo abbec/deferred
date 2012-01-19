@@ -55,7 +55,7 @@ private:
 	D3DXMATRIX _projection;
 	D3DXMATRIX _world_view_inv;
 
-	CModelViewerCamera _camera;
+	CFirstPersonCamera _camera;
 
 	Deferred::Object *_skybox;
 	ID3D10ShaderResourceView *_skybox_texture_RV;

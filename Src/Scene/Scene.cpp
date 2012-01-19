@@ -63,7 +63,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 
 	// Objects
 	Deferred::Object *obj = new Deferred::Object();
-	if (!obj->read_from_obj(device, "Media\\aspen.obj"))
+	if (!obj->read_from_obj(device, "Media\\sponza.obj"))
 		_cprintf("Error in initializing OBJ object! \n");
 
 	D3DXMATRIX translate;
@@ -71,6 +71,9 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 
 	D3DXMATRIX translate2;
 	D3DXMatrixTranslation(&translate2, 0.0f, 3.4f, -2.0f);
+	D3DXMATRIX scale_viking;
+	D3DXMatrixScaling(&scale_viking, 0.2f, 0.2f, 0.2f);
+	translate2 = translate2 * scale_viking;
 
 	//obj->set_transform(&skybox);
 
@@ -124,7 +127,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	effect->GetVariableByName("Ambient")->AsVector()->SetFloatVector((float *) _ambient_color);
 
 	_camera.SetEnablePositionMovement(true);
-	_camera.SetButtonMasks( MOUSE_RIGHT_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
+//	_camera.SetButtonMasks( MOUSE_RIGHT_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
 
 	return S_OK;
 }
@@ -141,7 +144,7 @@ const D3DXVECTOR3 *Scene::camera_at()
 
 HRESULT Scene::on_resize(const DXGI_SURFACE_DESC *back_buffer_desc)
 {
-	_camera.SetWindow(back_buffer_desc->Width, back_buffer_desc->Height);
+//	_camera.SetWindow(back_buffer_desc->Width, back_buffer_desc->Height);
 
 	_device->RSGetState(&_rs_default_state);
 
@@ -256,7 +259,7 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 
 	tech->GetDesc(&techDesc);
 
-	_device->RSSetState(_rs_state);
+	/*_device->RSSetState(_rs_state);
 	_texture_SR->SetResource(_skybox_texture_RV);
 	bump_shader_variables(_skybox, _skybox->get_subset_material(0));
 
@@ -266,7 +269,7 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 		_skybox->render();
 	}
 
-	_device->RSSetState(_rs_default_state);
+	_device->RSSetState(_rs_default_state);*/
 
 
 	// Render all objects

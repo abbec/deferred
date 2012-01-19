@@ -172,14 +172,14 @@ PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input, uniform bool textured, uniform bool sp
 	if (specular)
 		 specI = SpecularIntensity;
 
-	output.depth = float4(depth, specI, SpecularPower, 1.0);
+	output.depth = float4(depth, specI, SpecularPower, 1.f);
 
 	if (textured)
 		output.albedo = float4(AlbedoTexture.Sample( samLinear, input.TexCoord ).rgb, 1.0)*DiffuseColor;
 	else
 		output.albedo = DiffuseColor;
 
-	output.albedo.a = Alpha;
+	output.albedo.a = 1.f;
 
 	return output;
 }
@@ -273,6 +273,7 @@ float4 DirectionalLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
 	return float4((diff+spec)*LightColor.xyz, 1.0);
+	//return float4(0.5f, 0.5f, 0.5f, 1.f);
 }
 
 // Point lights
@@ -313,6 +314,7 @@ float4 PointLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 	float3 diff = color * max(0.0f, dot(normal.xyz, lightDir));
 
 	return float4((diff+spec)*LightColor.xyz, 1.0);
+	//return float4(0.5f, 0.5f, 0.5f, 1.f);
 }
 
 //--------------------------------------------------------------------------------------
@@ -427,7 +429,7 @@ technique10 GeometryStageAlpha
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, true) ) );
-		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		//SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }
@@ -480,7 +482,7 @@ technique10 AmbientLight
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, AmbientLightPS() ) );
 
-		//SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(SrcColorBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(NoDepthTest, 0);
     }
 }
