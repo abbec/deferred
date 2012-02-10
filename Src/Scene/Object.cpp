@@ -41,9 +41,6 @@ Object::~Object()
 bool Object::read_from_obj(ID3D10Device *device, std::string filename)
 {
 
-	Material m;
-	m.create_texture_from_tga(device, L"Media\\Textures\\background.tga");
-
 	WCHAR str_command[256] = {0};
 	WCHAR material_file[256] = {0};
     std::wifstream infile(filename);
