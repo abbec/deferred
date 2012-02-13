@@ -42,11 +42,15 @@ multiple render targets are used for, in the first pass of the
 algorithm, storing geometric scene information. The geometric
 information is typically at least view space normals and depth.
 
-This buffer is called a G-buffer and this stage of the algorithm is
+This buffer (essentially a collection of render targets) is called a G-buffer and this stage of the algorithm is
 called geometry stage. Vertex normals are transformed into view-space
-by multiplying with world and view matrix.
+by multiplying with a normal matrix that is the inverse transpose of
+the upper 3x3 section of the matrix $world*view$.
 
-EQUATION
+\begin{equation}
+	\text{vs\_normal} = \text{world\_view\_inv} * \text{vertex\_normal}
+	\label{eq:vs_normals}
+\end{equation}
 
 To have sufficient precision in the normals for later calculations it
 is possible to use 16-bit textures to store the normals. This is
@@ -65,6 +69,23 @@ to the far clip plane.
 The depth can furthermore be used to reconstruct view space positions
 which means that the positions does not need to be stored in the G-buffer.
 
+## The lighting stage
+When all needed geometric information has been stored in the G-buffer
+it can be used in the lighting stage. This is done by binding the
+G-buffer render targets as shader resources.
+
+The geometric information is then used in to calculate lighting in any
+way that fits the application. Phong shading can for example be
+implemented. Since the resources in the G-buffer are two-dimensional
+textures, lighting calculations are done by drawing a full screen
+triangle and point sampling the G-buffer textures.
+
+At this stage it is easy to see that the number of lighting
+calculations decreases. Consider a scene where there is $N$ light
+sources and $M$ objects. With classic forward rendering, the
+contribution from each light has to be calculated for each object
+resulting in $N*M$ calculations.
+
 ## Implementation
 The deferred shading algoritm has been implemented in the DirectX
 SDK. The minimum required DirectX version is 10 which means that a
@@ -73,6 +94,10 @@ computer running at least Windows Vista is required to run the sample.
 The implementation uses 16 bit textures (render targets) to achieve the maximum visual
 quality. The normals X, Y and Z values are stored in R, G and B
 channels of one render target, respectively.
+
+Furthermore, the implementation stores depth in one 16 bit G-buffer
+channel. This is a bit low resolution but this depth is used to
+reconstruct view space position.
 
 # Results
 The result is an implementation of a deferred shading algorithm in the
