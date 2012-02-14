@@ -84,7 +84,11 @@ At this stage it is easy to see that the number of lighting
 calculations decreases. Consider a scene where there is $N$ light
 sources and $M$ objects. With classic forward rendering, the
 contribution from each light has to be calculated for each object
-resulting in $N*M$ calculations.
+resulting in $N*M$ calculations. With the deferred approach, the $M$
+objects are first rendered into the G-buffer and in the lighting
+stage, one fullscreen triangle for each of the $N$ lights is
+rendered. This means that the light calculation complexity of the
+deferred shading algorithm is $N+M$.
 
 ## Implementation
 The deferred shading algoritm has been implemented in the DirectX
@@ -105,3 +109,15 @@ DirectX SDK. The implementation runs in real-time and rendering
 statistics for the algorithm are presented below.
 
 # Discussion
+The implementation works satisfying and it is efficient as
+expected. To fully leverage all advantages of the algorithm, some
+implementation of light scissoring is needed. Andersson CITE proposes
+a solution to this problem by dividing the screen into tiles and
+calculation which lights contribute to which tiles. This can be
+implemented with the help of compute shaders, a feature available in
+Direct X 11.
+
+Deferred shading is also a very good platform for various
+post-processing effect since there is already a texture resource
+containing the image before post processing. If the time would have
+allowed, I would have implemented some post processing effects.

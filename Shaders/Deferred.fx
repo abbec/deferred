@@ -232,7 +232,7 @@ VS_SCREENOUTPUT AmbientLightVS(float4 pos : POSITION, float3 texCoords : TEXCOOR
 float4 AmbientLightPS(VS_SCREENOUTPUT Input) : SV_TARGET0
 {
 	float3 color = Albedo.Sample(samLinear, Input.TexCoords.xy).xyz;
-	return 0.7*float4(color, 1.0);
+	return 1.5*float4(color, 1.0);
 }
 
 // Directional lights
