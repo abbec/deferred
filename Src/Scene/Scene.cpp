@@ -122,6 +122,9 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
     D3DXVECTOR3 At( 0.0f, 0.0f, 0.0f );
 	_camera.SetViewParams(&Eye, &At);
 	_camera.SetProjParams(( float )D3DX_PI * 0.5f, width / ( float )height, 0.1f, 100.0f);
+	_camera.SetResetCursorAfterMove(true);
+	_camera.SetRotateButtons(false, false, false, true);
+	ShowCursor(false);
 
 	_effect->GetVariableByName("FarClipDistance")->AsScalar()->SetFloat(_camera.GetFarClip());
 	effect->GetVariableByName("Ambient")->AsVector()->SetFloatVector((float *) _ambient_color);
@@ -259,7 +262,7 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 
 	tech->GetDesc(&techDesc);
 
-	/*_device->RSSetState(_rs_state);
+	_device->RSSetState(_rs_state);
 	_texture_SR->SetResource(_skybox_texture_RV);
 	bump_shader_variables(_skybox, _skybox->get_subset_material(0));
 
@@ -269,7 +272,7 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 		_skybox->render();
 	}
 
-	_device->RSSetState(_rs_default_state);*/
+	_device->RSSetState(_rs_default_state);
 
 
 	// Render all objects
