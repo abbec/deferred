@@ -753,8 +753,8 @@ VOID CFirstPersonCamera::FrameMove( FLOAT fElapsedTime )
         m_vGamePadRightThumb.z != 0 )
     {
         // Update the pitch & yaw angle based on mouse movement
-        float fYawDelta = m_vRotVelocity.x;
-        float fPitchDelta = m_vRotVelocity.y;
+        float fYawDelta = -m_vRotVelocity.x;
+        float fPitchDelta = -m_vRotVelocity.y;
 
         // Invert pitch if requested
         if( m_bInvertPitch )
