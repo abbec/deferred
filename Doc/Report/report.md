@@ -17,15 +17,39 @@ and deferred lighting. However, all three names essentially describes
 the same algorithm.
 
 ## Alternatives to deferred rendering
-The opposite of deferred rendering is forward rendering which can be
+The "opposite" of deferred rendering is forward rendering which can be
 performed in different ways.
 
-WRITE ABOUT MULTI-PASS METHODS AND ÜBER-SHADERS.
+In games and other real-time applications, many different types of
+light sources can be applied to objects with a variety of materials.
+This gives a lot of combinations (Half Life 2 has 1920 pixel shader
+combinations CITE 848 IN RTR). If deferred shading is not used, the
+most straightforward approach is to loop over all lights in the
+material shaders. However, shader branching performs poorly on current
+hardware. The alternative to this is to compile a different shader for
+each type of combination. This can be achieved using language features
+or code preprocessors. This is called über-shaders CITE 854 and 1271
+IN RTR. This is the way games have tackled this problem historically.
+
+Another alternative to this approach is to use a multi-pass lighting
+approach. The idea is to perform one rendering pass per light and use
+the hardware blending capabilities to accumulate light contributions.
+To do this, the lights affecting a particular object is determined. To
+narrow down the number of lights affecting an object, attenuation is
+used for the light sources. The obvious problem with this approach is
+that the process is $O(m*n)$. This means that making the algorithm
+perform good in large scenes is not at all trivial. Efficiency can for
+example be improved by scissoring in cases where lights affects only parts of
+an object.
+
+In comparison with the über-shader approach, the multi-pass approach
+gives a lower number of total shaders. To add a new light type, one
+shader for each type of material has to be implemented.
 
 # Method
 
 ## The G-buffer 
-Before any rendering happends, the scene contains
+Before any rendering happens, the scene contains
 geometric information. In the classic rendering approach, called
 forward rendering, each object is rendered and for each object,
 lighting calculations are performed. The problem with this arises when
@@ -63,7 +87,7 @@ transpose of the upper $3x3$ section of the matrix $world*view$.
 To have sufficient precision in the normals for later calculations it
 is possible to use 16-bit textures to store the normals. This is
 however both wasteful and inefficient on modern hardware. The normals
-can therefore be transformed into spheremap coordinates and then
+can therefore be transformed into sphere map coordinates and then
 stored in an 8-bit texture. CITE (check aras_p)
 
 Depth can also be stored in the G-buffer. It is however possible to
@@ -81,6 +105,10 @@ G-buffer.
 After this step, the geometry in the scene itself is not needed
 anymore and no actual objects are pushed through the graphics
 pipeline.
+
+A weakness with the algorithm shows up in the G-Buffer step , however.
+The fill rate costs for writing the G-buffers is significant and a
+this is especially true for console hardware.
 
 ## The lighting stage 
 When all needed geometric information has been
