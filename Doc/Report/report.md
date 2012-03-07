@@ -42,6 +42,10 @@ perform good in large scenes is not at all trivial. Efficiency can for
 example be improved by scissoring in cases where lights affects only parts of
 an object.
 
+Other practical issues with the algorithm include the high memory
+bandwidth requirements for using hardware blending and that objects
+need to be run through the vertex shader multiple times.
+
 In comparison with the über-shader approach, the multi-pass approach
 gives a lower number of total shaders. To add a new light type, one
 shader for each type of material has to be implemented.
