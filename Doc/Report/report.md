@@ -48,7 +48,7 @@ need to be run through the vertex shader multiple times.
 
 In comparison with the über-shader approach, the multi-pass approach
 gives a lower number of total shaders. To add a new light type, one
-shader for each type of material has to be implemented.
+shader for each type of material affected by this new light source has to be implemented.
 
 # Method
 
@@ -92,7 +92,50 @@ To have sufficient precision in the normals for later calculations it
 is possible to use 16-bit textures to store the normals. This is
 however both wasteful and inefficient on modern hardware. The normals
 can therefore be transformed into sphere map coordinates and then
-stored in an 8-bit texture. CITE (check aras_p)
+stored in an 8-bit texture. 
+
+## Compact normal storage for G-Buffers
+CITE (check aras_p)
+Spherical environment mapping is a mapping that indirectly maps a
+reflection vector to texture coordinates. A good property of this
+transform is that the reflection vector can point away from the
+camera which is also true for the view space normal.
+
+To do this transformation, Lambert azimuthal equal-area projection can
+be used. This transformation and the inverse of it are described as
+
+\begin{align} 
+    &(X, Y) = \left( \sqrt{\frac{2}{1-z}x},\sqrt{\frac{2}{1-z}y} \right) \nonumber \\
+    &(x, y, z) = \left( \sqrt{1 - \frac{X^2 + Y^2}{4}X},
+    \sqrt{\frac{X^2 + Y^2}{4}Y}, \right. \nonumber \\ 
+    & \left. -1+\frac{X^2 + Y^2}{2} \right)
+    \label{eq:lambert} 
+\end{align}
+
+where $(X, Y)$ is the resulting encoded normal. Assuming the normal is
+normalized, this can be implemented in HLSL like
+
+    half2 encode (half3 n, float3 view)
+    {
+        half f = sqrt(8*n.z+8);
+        return n.xy / f + 0.5;
+    }
+    
+    half3 decode (half4 enc, float3 view)
+    {
+        half2 fenc = enc*4-2;
+        half f = dot(fenc,fenc);
+        half g = sqrt(1-f/4);
+        half3 n;
+        n.xy = fenc*g;
+        n.z = 1-f/2;
+        return n;
+    }.
+    
+This compression gives a very small error CITE aras_p compared to the "exact" 16-bit normal storage
+and can be used to save bandwidth and GPU resources. However, it must
+be noted that an 8-bit representation of the view space normal might
+be too conservative in some cases and 16 bit storage has to be used.
 
 Depth can also be stored in the G-buffer. It is however possible to
 use the already existing depth buffer generation and bind the depth
@@ -153,9 +196,29 @@ values are stored in R, G and B channels of one render target,
 respectively.
 
 Furthermore, the implementation stores depth in one 16 bit G-buffer
-channel. This is a bit low resolution for depth but it is used to
+channel. This is a bit low resolution for depth (it is usually stored
+in 24 bits) but it is used to
 reconstruct view space position. The view space position is
 reconstructed instead of being passed on in the G-buffer.
+
+### G-Buffer layout
+The G-Buffer layout for this implementation is presented below.
+
+\begin{tabular}{|m{2cm}|m{2cm}|m{2cm}|m{2cm}|}
+  \hline
+  R & G & B & A \\
+  \hline
+  Normal.x & Normal.y & Normal.z & Not used \\
+  \hline
+  Depth & Specular intensity & Specular roughness & Not used \\
+  \hline
+  Albedo.x & Albedo.y & Albedo.z & Not used \\
+  \hline
+\end{tabular}
+
+This layout could be laid out more efficiently but the empty slots are
+kept for future needs. Albedo in this case is the diffuse color
+provided by textures or color parameters for the object.
 
 ### Reconstructing view space position from depth
 Since the implementation stores view space depth, there is no need to
@@ -166,9 +229,11 @@ far-clip plane and the multiplied by the depth value. In HLSL code
 this looks like
 
 	float depth = 
-		Depth.Load(float3(Input.Position.xy, 0)).r;
+		Depth.Load(
+            float3(Input.Position.xy, 0.f)).r;
+            
 	float4 position = 
-		float4(depth * Input.FrustumCorner, 1.0);
+		float4(depth * Input.FrustumCorner, 1.f);
 	
 where `Input.FrustumCorner` is the view space frustum corner
 corresponding to this vertex. Since a full screen quad is used, each
@@ -200,6 +265,7 @@ The implementation also contains code for loading Wavefront OBJ models and
 for handling lighting and scene setup. Currently it is possible to use
 spot and directional lights.
 
+## Architectural benefits
 From an implementation point of view, deferred shading also provides
 some architectural benefits. This is since the algorithm offers a
 strong separation between between the definition of lighting and
@@ -222,9 +288,13 @@ The implementation works satisfying and it is efficient
 as expected. To fully leverage all advantages of the algorithm, some
 implementation of light scissoring is needed. Andersson CITE proposes
 a solution to this problem by dividing the screen into tiles and
-calculatie which lights contribute to which tiles. This can be
+calculate which lights contribute to which tiles. This can be
 implemented with the help of compute shaders, a feature available in
-DirectX 11.
+DirectX 11. In this compute shader step, light culling is performed by
+determining visible light sources for each tile. The compute shader
+steps then results in number of visible light sources and index list
+of visible light sources per tile. This is then accumulated and
+combined with shading albedos to produce the final pixel color.
 
 Deferred shading is also a very good platform for various
 post-processing effect since there is already a texture resource
@@ -237,7 +307,13 @@ tonemapping to get correct results with this dynamic range.
 I have learned a lot in implementing this project much due to the fact
 that the DirectX API offers more manual control than the OpenGL 2 API
 which has been used exclusively earlier in the education. This means
-that some fundamental math for computer graphics had to be revisited.
+that some fundamental math for computer graphics had to be revisited
+and refreshed, which is always good.
+
+It would have been very interesting to have access to DirectX 11
+hardware to be able to implement more advanced light culling schemes
+as mentioned above but considering the limited amount of time I am
+satisfied with the amount of featured I managed to implement.
 
 As mentioned, the use of deferred shading is widespread in real time
 rendering and the gaming industry. However due to the limitations
@@ -246,5 +322,9 @@ new algorithms that uses the best parts of both deferred and forward
 rendering. Also, it is hard to predict what future graphics hardware
 will bring in form of shader branching capabilities which could make
 the situation better.
+
+Another fairly big disadvantage of the algorithm is that it does not
+support hardware antialiasing. Antialiasing has to be done with
+methods as MSAA which can be very slow.
 
 # References
