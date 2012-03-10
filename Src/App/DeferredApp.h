@@ -73,7 +73,7 @@ private:
 	ID3D10ShaderResourceView *_p_buffer_SRV[PBUFFER_SIZE];
 	ID3D10Texture2D *_p_textures[PBUFFER_SIZE];
 
-	void geometry_stage();
+	UINT geometry_stage();
 	void lighting_stage();
 };
 #endif //_DEFERRED_APP

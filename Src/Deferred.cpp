@@ -10,6 +10,7 @@
 #include <conio.h>
 
 DeferredApp *instance;
+static UINT num_screenshots = 0;
 
 //--------------------------------------------------------------------------------------
 // Reject any D3D10 devices that aren't acceptable by returning false
@@ -148,6 +149,53 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 		case 'C':
 			at = *DeferredApp::instance()->getScene()->camera_at();
 			_cprintf("Camera is at (%f, %f, %f)\n", at.x, at.y, at.z);
+			break;
+		case 'P': // Render screenshot		
+
+			ID3D10Resource *backbufferRes;
+			DXUTGetD3D10RenderTargetView()->GetResource(&backbufferRes);
+
+			D3D10_TEXTURE2D_DESC texDesc;
+			texDesc.ArraySize = 1;
+			texDesc.BindFlags = 0;
+			texDesc.CPUAccessFlags = 0;
+			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			texDesc.Width = DXUTGetDXGIBackBufferSurfaceDesc()->Width;
+			texDesc.Height = DXUTGetDXGIBackBufferSurfaceDesc()->Height; 
+			texDesc.MipLevels = 1;
+			texDesc.MiscFlags = 0;
+			texDesc.SampleDesc.Count = 1;
+			texDesc.SampleDesc.Quality = 0;
+			texDesc.Usage = D3D10_USAGE_DEFAULT;
+
+			ID3D10Texture2D *tex;
+			DXUTGetD3D10Device()->CreateTexture2D(&texDesc, 0, &tex);
+			DXUTGetD3D10Device()->CopyResource(tex, backbufferRes);
+
+			// Check that the directory exists and how many screenshots there
+			// are already
+			DWORD dwAttrib = GetFileAttributes(L"Screenshots/");
+
+			if (dwAttrib == INVALID_FILE_ATTRIBUTES || dwAttrib & FILE_ATTRIBUTE_DIRECTORY)
+				CreateDirectory(L"Screenshots", NULL);
+
+			WCHAR buff[256];
+			wsprintf(buff, L"Screenshots/screenshot_%u.png", num_screenshots);
+			dwAttrib = GetFileAttributes(buff);
+			while (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY))
+			{
+				++num_screenshots;
+				wsprintf(buff, L"Screenshots/screenshot_%u.png", num_screenshots);
+				dwAttrib = GetFileAttributes(buff);
+			}
+
+
+			D3DX10SaveTextureToFile(tex, D3DX10_IFF_PNG, buff);
+			_cwprintf(L"Saved screenshot to: %s\n", buff);
+			++num_screenshots;
+
+			tex->Release();
+			backbufferRes->Release();
 			break;
 		}
 

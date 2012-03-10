@@ -272,6 +272,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	_time = fTime;
 	_elapsed_time = fElapsedTime;
 	_user_context = pUserContext;
+	UINT poly_count = 0;
 
     float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
@@ -292,7 +293,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 			_device->ClearRenderTargetView( _p_buffer_views[i], ClearColor);
 
 		// Fill G-buffers
-		geometry_stage();
+		poly_count = geometry_stage();
 
 		// Lighting stage
 		lighting_stage();
@@ -319,7 +320,7 @@ void DeferredApp::render(ID3D10Device* pd3dDevice, double fTime, float fElapsedT
 	}*/
 
 	// Render text
-	_hud->render();
+	_hud->render(poly_count);
 	SAFE_RELEASE(_backbuffer);
 	SAFE_RELEASE(_depth_stencil);
 }
@@ -416,7 +417,7 @@ void DeferredApp::lighting_stage()
 	_scene.draw_lights(_device);
 }
 
-void DeferredApp::geometry_stage()
+UINT DeferredApp::geometry_stage()
 {
 	// Set the new render targets
     ID3D10RenderTargetView *views[GBUFFER_SIZE];
@@ -427,5 +428,5 @@ void DeferredApp::geometry_stage()
     _device->OMSetRenderTargets(GBUFFER_SIZE, views, _depth_stencil);
 	_device->IASetInputLayout(_layout);
 
-	_scene.render(_device, _effect);
+	return _scene.render(_device, _effect);
 }
