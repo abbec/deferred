@@ -20,7 +20,7 @@ Hud::~Hud()
 	SAFE_RELEASE(_sprite);
 }
 
-void Hud::render()
+void Hud::render(UINT poly_count)
 {
 	FLOAT OriginalBlendFactor[4];   
     UINT OriginalSampleMask = 0;   
@@ -60,11 +60,19 @@ void Hud::render()
 	rc2.right = 200;
 	rc2.top = 16;
 
+	char buff[128];
+	sprintf_s(buff, "Polygon count: %u", poly_count);
+
+	char buff2[128];
+	sprintf_s(buff2, "FPS: %.2f", DXUTGetFPS());
+
     // Start font drawing   
     _sprite->Begin(0);
     // Draw the text to the screen
-    HRESULT hr = _font->DrawTextW( _sprite, DXUTGetFrameStats(true), -1, &rc, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));   
+	HRESULT hr = _font->DrawTextA( _sprite, buff2, -1, &rc, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));   
 	hr = _font->DrawTextW( _sprite, DXUTGetDeviceStats(), -1, &rc2, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));
+	rc2.top += 16; rc2.bottom += 16;
+	//hr = _font->DrawTextA(_sprite, buff, -1, &rc2, DT_LEFT | DT_NOCLIP, D3DCOLOR_ARGB(255, 0, 255, 0));
     _sprite->End();
     // Restore the previous blend state and depth test
 	_device->OMSetBlendState(pOriginalBlendState10, OriginalBlendFactor, OriginalSampleMask);

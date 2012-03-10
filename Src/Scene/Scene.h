@@ -23,7 +23,7 @@ public:
 	HRESULT init(ID3D10Device *device, ID3D10Effect *effect);
 	HRESULT on_resize(const DXGI_SURFACE_DESC *back_buffer_desc);
 	void on_resize_release();
-	void render(ID3D10Device *device, ID3D10Effect *effect);
+	UINT render(ID3D10Device *device, ID3D10Effect *effect);
 	void render_skybox(ID3D10Device *device);
 	void draw_lights(ID3D10Device *device);
 	void rotate(D3DXVECTOR3 &at);

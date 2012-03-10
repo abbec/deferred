@@ -30,7 +30,7 @@ UINT GetNumMipLevels(UINT width, UINT height)
         return numLevels;
 }
 
-bool Material::create_texture_from_tga(ID3D10Device *device, std::wstring filename)
+/*bool Material::create_texture_from_tga(ID3D10Device *device, std::wstring filename)
 {
 	char path[256];
 	wcstombs(path, filename.c_str(), -1);
@@ -105,7 +105,7 @@ bool Material::create_texture_from_tga(ID3D10Device *device, std::wstring filena
 	}
 
 	return true;
-}
+}*/
 
 bool Material::create_texture(ID3D10Device *device, std::wstring filename)
 {

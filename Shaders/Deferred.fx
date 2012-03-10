@@ -179,7 +179,7 @@ PS_MRT_OUTPUT GBufferPS( VS_OUTPUT input, uniform bool textured, uniform bool sp
 	else
 		output.albedo = DiffuseColor;
 
-	output.albedo.a = 1.f;
+	output.albedo.a = Alpha;
 
 	return output;
 }
@@ -429,7 +429,7 @@ technique10 GeometryStageAlpha
         SetVertexShader( CompileShader( vs_4_0, GBufferVS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, GBufferPS(true, true) ) );
-		//SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
+		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ),  0xFFFFFFFF);
 		SetDepthStencilState(DepthTest, 0);
     }
 }

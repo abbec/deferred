@@ -35,7 +35,7 @@ namespace Deferred
 		bool has_texture() const { return _textureRV != NULL; }
 		ID3D10ShaderResourceView* get_texture() const { return _textureRV; }
 		bool create_texture(ID3D10Device *device, std::wstring filename);
-		bool create_texture_from_tga(ID3D10Device *device, std::wstring filename);
+		//bool create_texture_from_tga(ID3D10Device *device, std::wstring filename);
 
 		void set_technique(std::string tech){ _tech_name = tech; }
 		const std::string & get_technique() const { return _tech_name; }

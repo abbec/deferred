@@ -43,6 +43,8 @@ namespace Deferred
 
 		UINT get_num_subsets() { return _num_attrib_table_entries; }
 
+		UINT get_polygon_count() { return _mesh->GetFaceCount(); }
+
 		void set_transform(D3DXMATRIX *transform) { _transform = *transform; }
 		const D3DXMATRIX *get_transform() const { return &_transform; }
 

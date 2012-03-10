@@ -70,7 +70,7 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	D3DXMatrixTranslation(&translate, 0.0f, 50.0f, 0.0f);
 
 	D3DXMATRIX translate2;
-	D3DXMatrixTranslation(&translate2, 0.0f, 3.4f, -2.0f);
+	D3DXMatrixTranslation(&translate2, -10.f, 3.4f, -1.0f);
 	D3DXMATRIX scale_viking;
 	D3DXMatrixScaling(&scale_viking, 0.2f, 0.2f, 0.2f);
 	translate2 = translate2 * scale_viking;
@@ -254,8 +254,10 @@ void Scene::render_skybox(ID3D10Device *device)
 	//_skybox->render();
 }
 
-void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
+UINT Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 {
+
+	UINT total_polygons = 0;
 
 	ID3D10EffectTechnique *tech = _effect->GetTechniqueByName("GeometryStageNoSpecular");
 	D3D10_TECHNIQUE_DESC techDesc;
@@ -286,14 +288,14 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 	while (it != _objects.end())
 	{
 		o = *it;
-
+		total_polygons += o->get_polygon_count();
 		num_subsets = o->get_num_subsets();
 
 		for (UINT i = 0; i < num_subsets; i++)
 		{
 			m = o->get_subset_material(i);
 
-			if (m->get_alpha() < 1.0)
+			if (m->get_alpha() < 1.f)
 			{
 				transparent.push_back(i);
 			}
@@ -344,6 +346,7 @@ void Scene::render(ID3D10Device *device, ID3D10Effect *effect)
 	}
 
 	o = NULL;
+	return total_polygons;
 }
 
 void Scene::draw_lights(ID3D10Device *device)

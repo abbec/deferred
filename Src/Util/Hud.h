@@ -12,7 +12,7 @@ namespace Deferred
 		Hud(ID3D10Device *device);
 		~Hud();
 
-		void render();
+		void render(UINT poly_count);
 
 	private:
 		ID3D10Device *_device;
