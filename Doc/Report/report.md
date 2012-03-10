@@ -218,7 +218,37 @@ The G-Buffer layout for this implementation is presented below.
 
 This layout could be laid out more efficiently but the empty slots are
 kept for future needs. Albedo in this case is the diffuse color
-provided by textures or color parameters for the object.
+provided by textures or color parameters for the object. An example of
+G-Buffer render targets is presented below.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/screenshot_3}
+    \caption{View space normals stored in RT0 (Render Target 0).}
+    \label{fig:normals}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/screenshot_5}
+    \caption{Diffuse Albedo color stored in RT2}
+    \label{fig:albedo}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/screenshot_4}
+    \caption{View space depth stored in RT1. (Brightness and contrast
+    have been altered for better visibility.)}
+    \label{fig:depth}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/screenshot_7}
+    \caption{Specular intensity stored in RT1.}
+    \label{fig:spec_i}
+\end{figure}
 
 ### Reconstructing view space position from depth
 Since the implementation stores view space depth, there is no need to
@@ -239,7 +269,15 @@ where `Input.FrustumCorner` is the view space frustum corner
 corresponding to this vertex. Since a full screen quad is used, each
 vertex is assigned a frustum corner position as a texture coordinate
 which means that there is always an interpolated ray from the camera
-to the far plane.
+to the far plane (shown in figure \ref{fig:view_ray}).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/view-ray}
+    \caption{Reconstructing view space position from view space
+    depth.}
+    \label{fig:view_ray}
+\end{figure}
 
 The problem remaining is how to obtain the far plane corners from the
 frustum. This can be done from the view matrix.
@@ -278,10 +316,51 @@ The result is an implementation of a deferred shading
 algorithm in the DirectX SDK. The implementation runs in real-time and
 rendering statistics for the algorithm are presented below.
 
-It can be seen in figure REF that a quite high polygon count runs well
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/screenshot_8}
+    \caption{Final composit. (Corresponding to figure \ref{fig:spec_i})}
+    \label{fig:composit1}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/screenshot_6}
+    \caption{Final composit. (Corresponding to figures
+    \ref{fig:normals} - \ref{fig:depth})}
+    \label{fig:composit2}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{figures/screenshot_10}
+    \caption{Final composit.}
+    \label{fig:composit3}
+\end{figure}
+
+\begin{table}
+\centering
+\begin{tabular}{|m{2cm}|m{2cm}|m{2cm}|m{2cm}|}
+  \hline
+  GPU & Test case 1 (figure \ref{fig:composit1}) & Test case 2 (figure
+  \ref{fig:composit2}) & Test case 3 (figure \ref{fig:composit3}) \\
+  \hline
+  NVidia GeForce 9600GT & 273 FPS & 275 FPS & 273 FPS \\
+  \hline
+  NVidia GeForce 310M & 60 FPS & 59 FPS & 58 FPS \\
+  \hline
+\end{tabular}
+\caption{Performance figures.}
+\end{table}
+
+It can be seen in table REF that a quite high polygon count runs well
 even on moderate notebook GPUs. It can also be seen that an increase
 in the number of lights, does not affect the performance as could be
-expected in a forward renderer.
+expected in a forward renderer. Since the application is almost
+totally GPU bound, there is no reason to compare computers according
+to CPU. All cases in table REF contains $364091$ polygons (since no
+view frustum culling is performed). The small variations in FPS are
+due to the amount of geometry undergoing visibility and backface culling.
 
 # Discussion 
 The implementation works satisfying and it is efficient
