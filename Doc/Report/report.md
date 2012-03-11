@@ -352,14 +352,16 @@ rendering statistics for the algorithm are presented below.
   \hline
 \end{tabular}
 \caption{Performance figures.}
+\label{tab:perf}
 \end{table}
 
-It can be seen in table REF that a quite high polygon count runs well
+It can be seen in table \ref{tab:perf} that a quite high polygon count runs well
 even on moderate notebook GPUs. It can also be seen that an increase
-in the number of lights, does not affect the performance as could be
+in the number of lights (from two in figure \ref{fig:composit2} to ten
+in figure \ref{fig:composit1}), does not affect the performance as could be
 expected in a forward renderer. Since the application is almost
 totally GPU bound, there is no reason to compare computers according
-to CPU. All cases in table REF contains $364091$ polygons (since no
+to CPU. All cases in table \ref{tab:perf} contains $364091$ polygons (since no
 view frustum culling is performed). The small variations in FPS are
 due to the amount of geometry undergoing visibility and backface culling.
 
