@@ -270,16 +270,16 @@ bool Object::read_materials(std::wstring filename)
 	while (infile)
 	{
 		infile >> command;
+		WCHAR mtl_name[256] = {0};
 
 		if(wcscmp(command, L"newmtl") == 0)
         {
-			WCHAR mtl_name[256] = {0};
 			infile >> mtl_name;
 			std::map<std::wstring, UINT>::iterator it = _material_ids.find(std::wstring(mtl_name));
 
 			if (it == _material_ids.end())
 				continue;
-			
+
 			active_material = _materials.at(it->second);
 		}
 
