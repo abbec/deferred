@@ -4,7 +4,8 @@
 # Introduction 
 Deferred shading is an old idea that was proposed by
 Deering et al. [@Deering:1988] in 1988. However, it has not been used extensively until recent
-years. Today, deferred shading is de facto standard in game engines
+years. It was proposed for usage in games by Hargreaves CITE in 2004.
+Today, deferred shading is de facto standard in game engines
 and also in other types of real-time rendering. The need for deferred
 shading arises in scenes with many dynamic light sources. In these
 cases deferred shading can simplify and speed up lighting calculations
@@ -204,7 +205,7 @@ reconstructed instead of being passed on in the G-buffer.
 ### G-Buffer layout
 The G-Buffer layout for this implementation is presented below.
 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2cm}|m{2cm}|}
+\begin{tabular}{|m{1.5cm}|m{1.5cm}|m{1.5cm}|m{1.5cm}|}
   \hline
   R & G & B & A \\
   \hline
@@ -221,34 +222,34 @@ kept for future needs. Albedo in this case is the diffuse color
 provided by textures or color parameters for the object. An example of
 G-Buffer render targets is presented below.
 
-\begin{figure}
+\begin{figure*}
     \centering
-    \includegraphics[width=7cm]{figures/screenshot_3}
+    \includegraphics[width=8cm]{figures/screenshot_3}
     \caption{View space normals stored in RT0 (Render Target 0).}
     \label{fig:normals}
-\end{figure}
+\end{figure*}
 
-\begin{figure}
+\begin{figure*}
     \centering
-    \includegraphics[width=7cm]{figures/screenshot_5}
+    \includegraphics[width=8cm]{figures/screenshot_5}
     \caption{Diffuse Albedo color stored in RT2}
     \label{fig:albedo}
-\end{figure}
+\end{figure*}
 
-\begin{figure}
+\begin{figure*}
     \centering
-    \includegraphics[width=7cm]{figures/screenshot_4}
+    \includegraphics[width=8cm]{figures/screenshot_4}
     \caption{View space depth stored in RT1. (Brightness and contrast
     have been altered for better visibility.)}
     \label{fig:depth}
-\end{figure}
+\end{figure*}
 
-\begin{figure}
+\begin{figure*}
     \centering
-    \includegraphics[width=7cm]{figures/screenshot_7}
+    \includegraphics[width=8cm]{figures/screenshot_7}
     \caption{Specular intensity stored in RT1.}
     \label{fig:spec_i}
-\end{figure}
+\end{figure*}
 
 ### Reconstructing view space position from depth
 Since the implementation stores view space depth, there is no need to
@@ -340,7 +341,7 @@ rendering statistics for the algorithm are presented below.
 
 \begin{table}
 \centering
-\begin{tabular}{|m{2cm}|m{2cm}|m{2cm}|m{2cm}|}
+\begin{tabular}{|m{1.5cm}|m{1.5cm}|m{1.5cm}|m{1.5cm}|}
   \hline
   GPU & Test case 1 (figure \ref{fig:composit1}) & Test case 2 (figure
   \ref{fig:composit2}) & Test case 3 (figure \ref{fig:composit3}) \\

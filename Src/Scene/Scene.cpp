@@ -75,7 +75,10 @@ HRESULT Scene::init(ID3D10Device *device, ID3D10Effect *effect)
 	D3DXMatrixScaling(&scale_viking, 0.2f, 0.2f, 0.2f);
 	translate2 = translate2 * scale_viking;
 
-	//obj->set_transform(&skybox);
+	D3DXMATRIX scale_sponza;
+	D3DXMatrixScaling(&scale_sponza, 0.1f, 0.1f, 0.1f);
+
+	//obj->set_transform(&scale_sponza);
 
 	_objects.push_back(obj);
 
