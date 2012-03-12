@@ -1,10 +1,26 @@
 % Deferred Shading 
 % Albert Cervin
 
+# Abstract
+In this paper, a rendering algorithm called deferred rendering is
+presented. Deferred rendering is an algorithm used extensively in modern
+game engines and real-time applications. The algorithm decouples
+object and material properties from lighting calculations, removing
+many unnecessary lighting calculation. This is done by performing
+geometric calculations and lighting calculations in separate passes.
+This means that deferred rendering is a multi-pass algorithm. In the
+first step, geometric information is stored in what is called a
+G-Buffer. In the second step, the geometric information in the
+G-Buffer is used to perform lighting calculations and produce a final
+pixel color. The result is an implementation
+of a deferred rendering algorithm in DirectX 10. The implementation
+performs well for a large number of dynamic light sources as can be
+expected for a deferred rendering algorithm.
+
 # Introduction 
 Deferred shading is an old idea that was proposed by
 Deering et al. [@Deering:1988] in 1988. However, it has not been used extensively until recent
-years. It was proposed for usage in games by Hargreaves CITE in 2004.
+years. It was proposed for usage in games by Hargreaves [@Hargreaves] in 2004.
 Today, deferred shading is de facto standard in game engines
 and also in other types of real-time rendering. The need for deferred
 shading arises in scenes with many dynamic light sources. In these
@@ -24,15 +40,15 @@ performed in different ways.
 In games and other real-time applications, many different types of
 light sources can be applied to objects with a variety of materials.
 This gives a lot of combinations (Half Life 2 has 1920 pixel shader
-combinations CITE 848 IN RTR). If deferred shading is not used, the
+combinations [@McTaggart]). If deferred shading is not used, the
 most straightforward approach is to loop over all lights in the
 material shaders. However, shader branching performs poorly on current
 hardware. The alternative to this is to compile a different shader for
 each type of combination. This can be achieved using language features
-or code preprocessors. This is called über-shaders CITE 854 and 1271
-IN RTR. This is the way games have tackled this problem historically.
+or code preprocessors. The approach is called über-shaders [@Melax]
+[@Trapp] and this is the way games have tackled the problem historically.
 
-Another alternative to this approach is to use a multi-pass lighting
+Another alternative is to use a multi-pass lighting
 approach. The idea is to perform one rendering pass per light and use
 the hardware blending capabilities to accumulate light contributions.
 To do this, the lights affecting a particular object is determined. To
@@ -49,7 +65,7 @@ need to be run through the vertex shader multiple times.
 
 In comparison with the über-shader approach, the multi-pass approach
 gives a lower number of total shaders. To add a new light type, one
-shader for each type of material affected by this new light source has to be implemented.
+shader for each type of material, affected by this new light source has to be implemented.
 
 # Method
 
@@ -58,18 +74,13 @@ Before any rendering happens, the scene contains
 geometric information. In the classic rendering approach, called
 forward rendering, each object is rendered and for each object,
 lighting calculations are performed. The problem with this arises when
-there are many dynamic light sources. The most common technique for
-this is to use what is called über-shaders. Über shaders means that
-the shaders are compiled in different permutations, one for each
-number of dynamic light sources. This arises from the fact that it is
-not possible to use a non-constant value in a GPU shader loop. This
-kind of loop is needed to sum all contributions from all lights for an
-object. The problem with über-shaders are that the number of
-permutations does not scale well. If the number of light sources is
-increased, the number of shader permutations is increased
-accordingly. This is not ideal.
+there are many dynamic light sources. As mentioned above, the most common technique for
+handling this, historically,  is to use what is called über-shaders.
+However, as stated, über-shaders does not scale well with the number
+of light/material combination and introduces a far from ideal
+situation with shader permutations.
 
-Deferred shading tackles this problem by deferring the lighting
+Deferred shading tackles this problem by _deferring_ the lighting
 calculations to a later stage in the algorithm. This makes deferred
 shading a multi-pass algorithm and means that the hardware has to
 support multiple render targets (often referred to as MRT). The
@@ -78,7 +89,7 @@ algorithm, storing geometric scene information. The geometric
 information is typically at least view space normals and depth.
 
 This buffer (essentially a collection of render targets) is called a
-G-buffer (short for geometric buffer) and this stage of the algorithm
+G-Buffer (short for geometric buffer) and this stage of the algorithm
 is called geometry stage. Vertex normals are transformed into
 view-space by multiplying with a normal matrix that is the inverse
 transpose of the upper $3x3$ section of the matrix $world*view$.
@@ -96,11 +107,10 @@ can therefore be transformed into sphere map coordinates and then
 stored in an 8-bit texture. 
 
 ## Compact normal storage for G-Buffers
-CITE (check aras_p)
 Spherical environment mapping is a mapping that indirectly maps a
 reflection vector to texture coordinates. A good property of this
 transform is that the reflection vector can point away from the
-camera which is also true for the view space normal.
+camera which is also true for the view space normal [@Aras_Normals].
 
 To do this transformation, Lambert azimuthal equal-area projection can
 be used. This transformation and the inverse of it are described as
@@ -133,12 +143,12 @@ normalized, this can be implemented in HLSL like
         return n;
     }.
     
-This compression gives a very small error CITE aras_p compared to the "exact" 16-bit normal storage
+This compression gives a very small error [@Aras_Normals] compared to the "exact" 16-bit normal storage
 and can be used to save bandwidth and GPU resources. However, it must
 be noted that an 8-bit representation of the view space normal might
 be too conservative in some cases and 16 bit storage has to be used.
 
-Depth can also be stored in the G-buffer. It is however possible to
+Depth can also be stored in the G-Buffer. It is however possible to
 use the already existing depth buffer generation and bind the depth
 buffer as a shader resource in later stages. One important thing with
 the depth buffer generated by hardware is that it contains projected
@@ -148,41 +158,41 @@ to the far clip plane.
 
 The depth can furthermore be used to reconstruct view space positions
 which means that the positions does not need to be stored in the
-G-buffer.
+G-Buffer.
 
 After this step, the geometry in the scene itself is not needed
 anymore and no actual objects are pushed through the graphics
 pipeline.
 
 A weakness with the algorithm shows up in the G-Buffer step , however.
-The fill rate costs for writing the G-buffers is significant and a
+The fill rate costs for writing the G-Buffers are significant and
 this is especially true for console hardware.
 
 ## The lighting stage 
 When all needed geometric information has been
-stored in the G-buffer it can be used in the lighting stage. This is
-done by binding the G-buffer render targets as shader resources.
+stored in the G-Buffer it can be used in the lighting stage. This is
+done by binding the G-Buffer render targets as shader resources.
 
-The geometric information is then used in to calculate lighting in any
+The geometric information is then used to calculate lighting in any
 way that fits the application. Phong shading can for example be
-implemented. Since the resources in the G-buffer are two-dimensional
+implemented. Since the resources in the G-Buffer are two-dimensional
 textures, lighting calculations are done by drawing a full screen
-triangle and point sampling the G-buffer textures.
+triangle and point sampling the G-Buffer textures.
 
 At this stage it is easy to see that the number of lighting
 calculations decreases. Consider a scene where there is $N$ light
 sources and $M$ objects. With classic forward rendering, the
-contribution from each light has to be calculated for each object
-resulting in $N*M$ calculations. With the deferred approach, the $M$
-objects are first rendered into the G-buffer and in the lighting
+contribution from each light has to be calculated for each object,
+resulting in $O(N*M)$ calculations. With the deferred approach, the $M$
+objects are first rendered into the G-Buffer and in the lighting
 stage, one fullscreen triangle for each of the $N$ lights is
 rendered. This means that the light calculation complexity of the
-deferred shading algorithm is $N+M$.
+deferred shading algorithm is $O(N+M)$.
 
 Another performance gain in deferred shading comes from the fact that
 GPUs render faster when the same shader is used for many objects. The
-fact that the same shader can be used for the whole G-buffer
-generation and also lighting shaders can be used for a longer string
+fact that the same shader can be used for the whole G-Buffer
+generation and that lighting shaders can be used for a longer string
 of objects, will speed up the rendering.
 
 ## Implementation 
@@ -198,12 +208,12 @@ respectively.
 
 Furthermore, the implementation stores depth in one 16 bit G-buffer
 channel. This is a bit low resolution for depth (it is usually stored
-in 24 bits) but it is used to
-reconstruct view space position. The view space position is
+in 24 bits) but it is only used to
+reconstruct view space position which is, as said,
 reconstructed instead of being passed on in the G-buffer.
 
 ### G-Buffer layout
-The G-Buffer layout for this implementation is presented below.
+The G-Buffer layout for the implementation is presented below.
 
 \begin{tabular}{|m{1.5cm}|m{1.5cm}|m{1.5cm}|m{1.5cm}|}
   \hline
@@ -220,7 +230,7 @@ The G-Buffer layout for this implementation is presented below.
 This layout could be laid out more efficiently but the empty slots are
 kept for future needs. Albedo in this case is the diffuse color
 provided by textures or color parameters for the object. An example of
-G-Buffer render targets is presented below.
+G-Buffer render targets is presented in figures \ref{fig:normals} to \ref{fig:spec_i}.
 
 \begin{figure*}
     \centering
@@ -255,8 +265,8 @@ G-Buffer render targets is presented below.
 Since the implementation stores view space depth, there is no need to
 project and unproject the value as would be the case if the hardware
 depth buffer had been used. Instead the approach suggested by Wenzel
-CITE is used. A ray is constructed pointing from the camera to the
-far-clip plane and the multiplied by the depth value. In HLSL code
+[@Wenzel] is used. A ray is constructed pointing from the camera to the
+far-clip plane and then multiplied by the depth value. In HLSL code
 this looks like
 
 	float depth = 
@@ -315,7 +325,7 @@ lighting step.
 # Results 
 The result is an implementation of a deferred shading
 algorithm in the DirectX SDK. The implementation runs in real-time and
-rendering statistics for the algorithm are presented below.
+rendering statistics for the algorithm are presented in table \ref{tab:perf}.
 
 \begin{figure}
     \centering
@@ -362,19 +372,19 @@ in figure \ref{fig:composit1}), does not affect the performance as could be
 expected in a forward renderer. Since the application is almost
 totally GPU bound, there is no reason to compare computers according
 to CPU. All cases in table \ref{tab:perf} contains $364091$ polygons (since no
-view frustum culling is performed). The small variations in FPS are
+view frustum culling is performed). The small variations in FPS are likely
 due to the amount of geometry undergoing visibility and backface culling.
 
 # Discussion 
 The implementation works satisfying and it is efficient
 as expected. To fully leverage all advantages of the algorithm, some
-implementation of light scissoring is needed. Andersson CITE proposes
+implementation of light scissoring is needed. Andersson [@Andersson] proposes
 a solution to this problem by dividing the screen into tiles and
 calculate which lights contribute to which tiles. This can be
 implemented with the help of compute shaders, a feature available in
 DirectX 11. In this compute shader step, light culling is performed by
 determining visible light sources for each tile. The compute shader
-steps then results in number of visible light sources and index list
+step then results in a number of visible light sources and an index list
 of visible light sources per tile. This is then accumulated and
 combined with shading albedos to produce the final pixel color.
 
@@ -382,11 +392,11 @@ Deferred shading is also a very good platform for various
 post-processing effect since there is already a texture resource
 containing the raw image before post processing. If the time would
 have allowed, I would have implemented some post processing effects
-like depth of field, motion blur, tonemapping and blur. Since 16 bit
+like depth of field, motion blur and tonemapping. Since 16 bit
 floating point textures are used, it is absolutely neccessary to use
 tonemapping to get correct results with this dynamic range.
 
-I have learned a lot in implementing this project much due to the fact
+I have learned a lot in implementing this project, much due to the fact
 that the DirectX API offers more manual control than the OpenGL 2 API
 which has been used exclusively earlier in the education. This means
 that some fundamental math for computer graphics had to be revisited
@@ -402,8 +412,8 @@ rendering and the gaming industry. However due to the limitations
 regarding for example transparent objects, there is a tendency to try to innovate
 new algorithms that uses the best parts of both deferred and forward
 rendering. Also, it is hard to predict what future graphics hardware
-will bring in form of shader branching capabilities which could make
-the situation better.
+will bring in form of shader branching capabilities which could change
+the situation.
 
 Another fairly big disadvantage of the algorithm is that it does not
 support hardware antialiasing. Antialiasing has to be done with
