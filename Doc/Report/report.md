@@ -2,27 +2,27 @@
 % Albert Cervin
 
 # Abstract
-In this paper, a rendering algorithm called deferred rendering is
-presented. Deferred rendering is an algorithm used extensively in modern
+In this paper, a rendering algorithm called deferred shading is
+presented. Deferred shading is an algorithm used extensively in modern
 game engines and real-time applications. The algorithm decouples
 object and material properties from lighting calculations, removing
-many unnecessary lighting calculation. This is done by performing
+many unnecessary lighting calculations. This is done by performing
 geometric calculations and lighting calculations in separate passes.
 This means that deferred rendering is a multi-pass algorithm. In the
 first step, geometric information is stored in what is called a
 G-Buffer. In the second step, the geometric information in the
 G-Buffer is used to perform lighting calculations and produce a final
 pixel color. The result is an implementation
-of a deferred rendering algorithm in DirectX 10. The implementation
+of a deferred shading algorithm in DirectX 10. The implementation
 performs well for a large number of dynamic light sources as can be
 expected for a deferred rendering algorithm.
 
 # Introduction 
 Deferred shading is an old idea that was proposed by
 Deering et al. [@Deering:1988] in 1988. However, it has not been used extensively until recent
-years. It was proposed for usage in games by Hargreaves [@Hargreaves] in 2004.
-Today, deferred shading is de facto standard in game engines
-and also in other types of real-time rendering. The need for deferred
+years. It was proposed for usage in games by Hargreaves [@Hargreaves]
+in 2004 and today, deferred shading is a de facto standard in game engines
+and also in other types of real-time rendering applications. The need for deferred
 shading arises in scenes with many dynamic light sources. In these
 cases deferred shading can simplify and speed up lighting calculations
 by orders of magnitude. There are downsides, however and the memory
@@ -33,8 +33,8 @@ Deferred shading is also known under names such as deferred rendering
 and deferred lighting. However, all three names essentially describes
 the same algorithm.
 
-## Alternatives to deferred rendering
-The "opposite" of deferred rendering is forward rendering which can be
+## Alternatives to deferred shading
+The "opposite" of deferred shading is forward rendering which can be
 performed in different ways.
 
 In games and other real-time applications, many different types of
@@ -43,7 +43,7 @@ This gives a lot of combinations (Half Life 2 has 1920 pixel shader
 combinations [@McTaggart]). If deferred shading is not used, the
 most straightforward approach is to loop over all lights in the
 material shaders. However, shader branching performs poorly on current
-hardware. The alternative to this is to compile a different shader for
+hardware. The solution to this is to compile a different shader for
 each type of combination. This can be achieved using language features
 or code preprocessors. The approach is called über-shaders [@Melax]
 [@Trapp] and this is the way games have tackled the problem historically.
@@ -75,9 +75,9 @@ geometric information. In the classic rendering approach, called
 forward rendering, each object is rendered and for each object,
 lighting calculations are performed. The problem with this arises when
 there are many dynamic light sources. As mentioned above, the most common technique for
-handling this, historically,  is to use what is called über-shaders.
+handling this, historically, is to use what is called über-shaders.
 However, as stated, über-shaders does not scale well with the number
-of light/material combination and introduces a far from ideal
+of light/material combinations and introduces a far from ideal
 situation with shader permutations.
 
 Deferred shading tackles this problem by _deferring_ the lighting
@@ -88,8 +88,8 @@ multiple render targets are used for, in the first pass of the
 algorithm, storing geometric scene information. The geometric
 information is typically at least view space normals and depth.
 
-This buffer (essentially a collection of render targets) is called a
-G-Buffer (short for geometric buffer) and this stage of the algorithm
+The buffer (essentially a collection of render targets) is called a
+G-Buffer (short for geometry buffer) and this stage of the algorithm
 is called geometry stage. Vertex normals are transformed into
 view-space by multiplying with a normal matrix that is the inverse
 transpose of the upper $3x3$ section of the matrix $world*view$.
@@ -150,7 +150,7 @@ be too conservative in some cases and 16 bit storage has to be used.
 
 Depth can also be stored in the G-Buffer. It is however possible to
 use the already existing depth buffer generation and bind the depth
-buffer as a shader resource in later stages. One important thing with
+buffer as a shader resource in later stages. One important property of
 the depth buffer generated by hardware is that it contains projected
 depth values, that is, clip space depth. To use this depth in
 calculations it has to be unprojected by dividing it with the distance
@@ -164,9 +164,13 @@ After this step, the geometry in the scene itself is not needed
 anymore and no actual objects are pushed through the graphics
 pipeline.
 
-A weakness with the algorithm shows up in the G-Buffer step , however.
+A weakness with the algorithm shows up in the G-Buffer step, however.
 The fill rate costs for writing the G-Buffers are significant and
 this is especially true for console hardware.
+
+Another fairly big disadvantage is that deferred shading does not
+support hardware antialiasing. Antialiasing has to be done with
+methods as MSAA which can be very slow.
 
 ## The lighting stage 
 When all needed geometric information has been
@@ -182,7 +186,7 @@ triangle and point sampling the G-Buffer textures.
 At this stage it is easy to see that the number of lighting
 calculations decreases. Consider a scene where there is $N$ light
 sources and $M$ objects. With classic forward rendering, the
-contribution from each light has to be calculated for each object,
+contribution from each light source has to be calculated for each object,
 resulting in $O(N*M)$ calculations. With the deferred approach, the $M$
 objects are first rendered into the G-Buffer and in the lighting
 stage, one fullscreen triangle for each of the $N$ lights is
@@ -202,15 +206,16 @@ means that a computer running at least Windows Vista is required to
 run the sample.
 
 The implementation uses 16 bit floating point textures (render
-targets) to achieve the maximum visual quality. The normals X, Y and Z
-values are stored in R, G and B channels of one render target,
-respectively.
+targets) to achieve the maximum visual quality. The X, Y and Z
+values of the view space normals are stored in the R, G and B channels
+of one render target, respectively.
 
 Furthermore, the implementation stores depth in one 16 bit G-buffer
 channel. This is a bit low resolution for depth (it is usually stored
 in 24 bits) but it is only used to
 reconstruct view space position which is, as said,
-reconstructed instead of being passed on in the G-buffer.
+reconstructed instead of being passed on in the G-buffer (described in
+detail in section \ref{sec:depth}).
 
 ### G-Buffer layout
 The G-Buffer layout for the implementation is presented below.
@@ -227,7 +232,7 @@ The G-Buffer layout for the implementation is presented below.
   \hline
 \end{tabular}
 
-This layout could be laid out more efficiently but the empty slots are
+This layout could be designed more efficiently but the empty slots are
 kept for future needs. Albedo in this case is the diffuse color
 provided by textures or color parameters for the object. An example of
 G-Buffer render targets is presented in figures \ref{fig:normals} to \ref{fig:spec_i}.
@@ -242,7 +247,7 @@ G-Buffer render targets is presented in figures \ref{fig:normals} to \ref{fig:sp
 \begin{figure*}
     \centering
     \includegraphics[width=8cm]{figures/screenshot_5}
-    \caption{Diffuse Albedo color stored in RT2}
+    \caption{Diffuse Albedo color stored in RT2.}
     \label{fig:albedo}
 \end{figure*}
 
@@ -262,6 +267,7 @@ G-Buffer render targets is presented in figures \ref{fig:normals} to \ref{fig:sp
 \end{figure*}
 
 ### Reconstructing view space position from depth
+\label{sec:depth}
 Since the implementation stores view space depth, there is no need to
 project and unproject the value as would be the case if the hardware
 depth buffer had been used. Instead the approach suggested by Wenzel
@@ -317,7 +323,7 @@ spot and directional lights.
 ## Architectural benefits
 From an implementation point of view, deferred shading also provides
 some architectural benefits. This is since the algorithm offers a
-strong separation between between the definition of lighting and
+strong separation between the definition of lighting and
 materials. The materials and material properties are in large part
 handled in the G-Buffer step whereas the lights are handled in the
 lighting step.
@@ -414,9 +420,5 @@ new algorithms that uses the best parts of both deferred and forward
 rendering. Also, it is hard to predict what future graphics hardware
 will bring in form of shader branching capabilities which could change
 the situation.
-
-Another fairly big disadvantage of the algorithm is that it does not
-support hardware antialiasing. Antialiasing has to be done with
-methods as MSAA which can be very slow.
 
 # References
